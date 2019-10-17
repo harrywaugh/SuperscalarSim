@@ -38,3 +38,16 @@ int read_program_file(char *filename, char ***program_str)  {
 
     return count;
 }
+
+int find_fn(char *fn, char ***program, int program_len)  {
+    int correct_letters = 0;
+    for (int i = 0; i < program_len; i++)  {
+        correct_letters = 0;
+        for (int l = 0; l < strlen(fn); l++)  {
+            if (fn[l] != (*program)[i][l])  break;
+            correct_letters++;
+        }
+        if (correct_letters == strlen(fn))  return i+1;
+    }
+    return -1;
+}
