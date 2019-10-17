@@ -1,16 +1,17 @@
 main:
-    addi $s0, $zero, 1    # s0=0+1   s registers are "Saved values representing final computed results"
+    add $t0, $zero, 1    
     addi $s1, $zero, 5    
-    addi $a0, $zero, 0    # a registers represent the arguments to the program
+    addi $a0, $zero, 0    
     addi $a1, $zero, 1
     addi $a2, $zero, 2
-    j for                 # jump to 'for' section
+    j for                 
+# jump to 'for' section
 
 for:
-    beq $s0, $s1, end     # branch if (s0 == s1), jump to 'end'
-    lw $t1, 0($a1)        # load word from memory[a1+0] into temporary $t1
+    beq $s0, $s1, end     
+    lw $t1, 0($a1)        
     lw $t2, 0($a2)
-    add $t0, $t1, $t2     # t0 = t1 + t2
+    add $t0, $t1, $t2     
     sw $t0, 0($a0)
 	addi $a0, $a0, 4
 	addi $a1, $a1, 4
