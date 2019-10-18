@@ -32,6 +32,4 @@ void Processor::create_fn_map()  {
 void Processor::run_program()
 {
     create_fn_map();
-
-    
 }
