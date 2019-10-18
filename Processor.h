@@ -17,6 +17,7 @@ private:
     void create_fn_map();
     uint32_t main_memory[100][4] = {0};
     uint32_t registers[32] = {0};
+    uint32_t fp_registers[32] = {0};
     map<std::string, int> register_map = {
         {"$zero", 0},
         {"$v0", 2}, {"$v1", 3},
