@@ -25,33 +25,8 @@ int main(int argn, char *argv[])  {
     else
         cout << "Unable to open file";
     
-    processor.start();
+    processor.run_program();
 
     return 0;
 }
-
-// Fetch -> Decode -> Execute -> Writeback
-// void run_simulator(char ***program, int program_len)  {
-//     int pc = find_fn("main", program, program_len);
-//     int clock = 0;
-//     uint32_t a[4]  = {0}; // Argument registers
-//     uint32_t t[10] = {0}; // Temporary registers
-//     uint32_t v[2]  = {0}; // Return registers
-//     uint32_t s[8]  = {0}; // Computed registers
-//     uint8_t exit   = 0;
-//     char *opcode;
-//     char *curr_instruction;
-    
-
-//     while (exit == 0)  {
-//         debug_simulator(pc, program, 1);   // Debug
-//         curr_instruction = (*program)[pc]; // Fetch
-
-
-
-//         if (pc >= program_len)  exit = 1;
-//     }
-
-
-// }
 

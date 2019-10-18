@@ -1,10 +1,8 @@
 main:
-# asdasd
 	li $t2, 3
 	li $t3, 4
 	add $t4, $t2, $t3
-	sub $t5, $t2, $t3
-	sw $t5, Z
-	li $v0, 10
-	syscall
+	sub $t5, $t3, $t2
+	add $t6, $t5, $t4
+	sw $t6, 0(100)
 for:
