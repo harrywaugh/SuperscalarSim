@@ -13,7 +13,7 @@ private:
     string operand2 = "";
 
     int iterate_until_delim(int index, string line);
-    void debug();
+    void debug(int pin);
     void correct_mem_syntax();
 
 public : Instruction(string line);
