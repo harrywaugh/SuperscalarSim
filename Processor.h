@@ -11,7 +11,8 @@ class Processor
 {
 private:
     int PC;
-    vector<string> instructions;
+    vector<string> instruction_strings;
+    vector<Instruction> instructions;
     map<string, int> fn_map;
     void create_fn_map();
     uint32_t main_memory[100][4] = {0};
