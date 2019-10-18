@@ -9,7 +9,7 @@ private:
     string opcode;
     string operand0;
     string operand1;
-    string destination;
+    string operand2;
 
 public:
     Instruction(string opcode);

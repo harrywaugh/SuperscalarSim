@@ -25,6 +25,7 @@ void Processor::create_fn_map()  {
         if (line.back() == ':')  {
             string function_name = line.substr(0, line.size() - 1);
             fn_map.insert(pair<string, int>(function_name, i + 1));
+            instructions.erase(instructions.begin()+i);
         }
     }
 }
