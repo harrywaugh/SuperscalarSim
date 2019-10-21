@@ -32,12 +32,29 @@ void Processor::create_fn_map()  {
     }
 }
 
-void Processor::run_program()
-{
+void Processor::run_program()  {
     create_fn_map();
     PC = fn_map.at("main");
 
-    debug_processor();
+    bool running = true;
+    while (running)  {
+        debug_processor();
+        execute_instruction(instructions.at(PC));
+        incrementPC();
+        running = false;
+    }
+
+}
+
+void Processor::execute_instruction(Instruction current_instruction)  {
+    if (current_instruction.is_fn)  return;
+    if ( current_instruction.opcode.compare("li") ) {
+        stringstream parser(current_instruction.operand1);
+        int val = 0;
+        parser >> val;
+        registers[register_map.at(current_instruction.operand0)] = val;
+        cout << "Set register " << current_instruction.operand0 << " to " << current_instruction.operand1;
+    }
 }
 
 void Processor::debug_processor()  {
@@ -50,9 +67,8 @@ void Processor::debug_processor()  {
             cout << "\t";
         cout << i << ". " << instructions.at(i).to_string(); 
         if (i == PC)
-            cout << "  <-";
+            cout << "  <- PC";
         cout << endl;
-        
     }
     cout << endl;
 

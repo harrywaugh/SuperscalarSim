@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <iostream>
+#include <sstream>
 #include <vector>
 #include <map>
 
@@ -27,6 +28,7 @@ private:
         {"$ra", 31},
     };
     void create_fn_map();
+    void execute_instruction(Instruction current_instruction);
     void debug_processor();
 
 public:
