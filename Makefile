@@ -1,8 +1,8 @@
-CC=icpc
+CC=g++
 
-simulator: simulator.cpp
+simulator: main.cpp
 	@echo "Compiling simulator..."
-	${CC} -std=c++11 *.c *.cpp -o simulator.exe
+	${CC} -std=c++11 *.cpp -o simulator.exe
 
 clean:
 	@echo "Cleaning up..."

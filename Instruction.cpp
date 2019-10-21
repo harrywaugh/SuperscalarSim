@@ -4,7 +4,16 @@ using namespace std;
 
 Instruction::Instruction(string line)  {
     int pin = 0;
-    if (line.at(0) != '\t')  return;
+    if (line.at(0) != '\t')  {
+        int start_index = 0;
+        int current_index = 0;
+        current_index = iterate_until_delim(current_index, line);
+        fn_name = line.substr(start_index, current_index-start_index - 1);
+        return;
+    }
+
+    is_fn = false;
+
     int start_index = 1;
     int current_index = 1;
     current_index = iterate_until_delim(current_index, line);
@@ -73,4 +82,18 @@ int Instruction::iterate_until_delim(int index, string line)  {
         index++;
     }
     return index;
+}
+
+string Instruction::to_string()  {
+    if (is_fn) 
+        return fn_name;
+
+    string new_string = opcode;
+    new_string = new_string.append(" ");
+    new_string = new_string.append(operand0);
+    new_string = new_string.append(" ");
+    new_string = new_string.append(operand1);
+    new_string = new_string.append(" ");
+    new_string = new_string.append(operand2);
+    return new_string;
 }
