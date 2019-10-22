@@ -76,8 +76,7 @@ void Instruction::correct_mem_syntax()  {
     operand1 = operand1.substr(0, current_index);
 }
 
-Instruction::~Instruction()
-{
+Instruction::~Instruction()  {
 
 }
 
@@ -87,8 +86,7 @@ void Instruction::debug(int pin)  {
 }
 
 int Instruction::iterate_until_delim(int index, string line)  {
-    while (index < line.size() && line.at(index) != ' ')
-    {
+    while (index < line.size() && line.at(index) != ' ')  {
         index++;
     }
     return index;

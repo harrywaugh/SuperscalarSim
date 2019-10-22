@@ -17,9 +17,12 @@ int main(int argn, char *argv[])  {
     //Read file line by line
     if (infile.is_open())  {
         while (getline(infile, line))  {
-            if (line[0] == '#' || line[0] == '\n')
+            if (line.size() == 0 || line[0] == '#' || line[0] == '\n')
                 continue;    
-            
+            else if (line[0] == '.')  {
+                processor.addVariable(line);
+                continue;
+            }
             processor.addInstruction(line);
         }
         infile.close();
@@ -31,4 +34,5 @@ int main(int argn, char *argv[])  {
 
     return 0;
 }
+
 

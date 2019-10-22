@@ -11,3 +11,5 @@
 #include "Processor.h"
 
 void run_simulator(char ***program, int program_len);
+
+int iterate_until_delim(int index, string line);

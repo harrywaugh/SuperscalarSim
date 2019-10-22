@@ -13,9 +13,11 @@ class Processor
 private:
     int PC;
     int cycles = 0;
+    int free_mem_pointer = 0;
     vector<string> instruction_strings;
     vector<Instruction> instructions;
     map<string, int> fn_map;
+    map<string, int> var_map;
     uint32_t main_memory[100] = {0};
     uint32_t registers[32]       = { {0} };
     uint32_t fp_registers[32]    = { {0} };
@@ -37,6 +39,7 @@ public:
     Processor();
     ~Processor();
     void addInstruction(string line);
+    void addVariable(string line);
     void incrementPC();
     void incrementCycles();
     void run_program();

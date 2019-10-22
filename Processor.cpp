@@ -23,12 +23,30 @@ void Processor::addInstruction(string line)  {
     instruction_strings.push_back(line);
 }
 
+void Processor::addVariable(string line)
+{
+    int start_index = 1;
+    int current_index = 1;
+    string var_name;
+    int value;
+
+    while (current_index < line.size() && line.at(current_index) != ' ')  {
+        current_index++;
+    }
+
+    var_name = line.substr(start_index, current_index - start_index);
+    current_index++;
+    value = stoi(line.substr(current_index));
+
+    main_memory[free_mem_pointer] = value;
+    var_map.insert(pair<string, int>(var_name, free_mem_pointer++));
+
+}
+
 void Processor::create_fn_map()  {
     for (int i = 0; i < instructions.size(); i++)  {
-        string line = instruction_strings.at(i);
-        if (line.back() == ':')  {
-            string function_name = line.substr(0, line.size() - 1);
-            fn_map.insert(pair<string, int>(function_name, i+1));
+        if (instructions.at(i).is_fn)  {
+            fn_map.insert(pair<string, int>(instructions.at(i).fn_name, i + 1));
             // instructions.erase(instructions.begin()+i);
             // i--;
         }
@@ -71,6 +89,10 @@ void Processor::execute_instruction(Instruction current_instruction)  {
     }
     if ( current_instruction.opcode.compare("exit") == 0 )  {
         registers[31] = 1;
+        return;
+    }
+    if ( current_instruction.opcode.compare("j") == 0 )  {
+        PC = fn_map.at(current_instruction.operand0);
         return;
     }
     if ( current_instruction.opcode.compare("add") == 0 )  {
@@ -122,6 +144,11 @@ void Processor::execute_instruction(Instruction current_instruction)  {
         registers[register_map.at(current_instruction.operand0)] = main_memory[stoi(current_instruction.operand2)];
         return;
     }
+    if (current_instruction.opcode.compare("la") == 0) {
+        registers[register_map.at(current_instruction.operand0)] = var_map.at(current_instruction.operand1);
+        return;
+    }
+
     if ( current_instruction.opcode.compare("sw") == 0 )  {
         main_memory[stoi(current_instruction.operand2)] = registers[register_map.at(current_instruction.operand0)];
         return;
@@ -155,10 +182,8 @@ void Processor::debug_processor()  {
 
     cout << "\nMain Memory : \n" << endl;
 
-    for (int j = 0; j < 10; j++)
-    {
-        for (int i = 0; i < 10; i++)
-        {
+    for (int j = 0; j < 10; j++)  {
+        for (int i = 0; i < 10; i++)  {
             if (j*10+i < 10)  cout << " ";
             cout << j * 10 + i << ": " << main_memory[j * 10 + i] << " ";
         }
