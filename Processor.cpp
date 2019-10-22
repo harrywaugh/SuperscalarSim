@@ -118,6 +118,10 @@ void Processor::execute_instruction(Instruction current_instruction)  {
             registers[register_map.at(current_instruction.operand1)] >> stoi(current_instruction.operand2);
         return;
     }
+    if ( current_instruction.opcode.compare("lw") == 0 )  {
+        registers[register_map.at(current_instruction.operand0)] = main_memory[stoi(current_instruction.operand2)];
+        return;
+    }
     if ( current_instruction.opcode.compare("sw") == 0 )  {
         main_memory[stoi(current_instruction.operand2)] = registers[register_map.at(current_instruction.operand0)];
         return;
