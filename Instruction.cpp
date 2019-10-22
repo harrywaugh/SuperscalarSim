@@ -14,6 +14,7 @@ Instruction::Instruction(string line)  {
     if (line.at(0) != '\t')  {
         int start_index = 0;
         int current_index = 0;
+        is_fn = true;
         current_index = iterate_until_delim(current_index, line);
         fn_name = line.substr(start_index, current_index-start_index - 1);
         return;

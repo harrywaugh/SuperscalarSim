@@ -20,7 +20,6 @@ void Processor::incrementCycles()  {
 void Processor::addInstruction(string line)  {
     Instruction new_instruction(line);
     instructions.push_back(new_instruction);
-    instruction_strings.push_back(line);
 }
 
 void Processor::addVariable(string line)
@@ -61,7 +60,7 @@ void Processor::run_program()  {
     while ( registers[31] == 0 )  {
 
         debug_processor();
-
+        getchar();
         current_instruction = fetch_instruction();
         incrementCycles();
         execute_instruction(current_instruction);
@@ -93,6 +92,12 @@ void Processor::execute_instruction(Instruction current_instruction)  {
     }
     if ( current_instruction.opcode.compare("j") == 0 )  {
         PC = fn_map.at(current_instruction.operand0);
+        return;
+    }
+    if ( current_instruction.opcode.compare("beq") == 0 )  {
+        if (registers[register_map.at(current_instruction.operand0)] ==
+            registers[register_map.at(current_instruction.operand1)])
+            PC = fn_map.at(current_instruction.operand2);
         return;
     }
     if ( current_instruction.opcode.compare("add") == 0 )  {
@@ -141,7 +146,7 @@ void Processor::execute_instruction(Instruction current_instruction)  {
         return;
     }
     if ( current_instruction.opcode.compare("lw") == 0 )  {
-        registers[register_map.at(current_instruction.operand0)] = main_memory[stoi(current_instruction.operand2)];
+        registers[register_map.at(current_instruction.operand0)] = main_memory[registers[register_map.at(current_instruction.operand2)]];
         return;
     }
     if (current_instruction.opcode.compare("la") == 0) {
@@ -150,7 +155,7 @@ void Processor::execute_instruction(Instruction current_instruction)  {
     }
 
     if ( current_instruction.opcode.compare("sw") == 0 )  {
-        main_memory[stoi(current_instruction.operand2)] = registers[register_map.at(current_instruction.operand0)];
+        main_memory[registers[register_map.at(current_instruction.operand2)]] = registers[register_map.at(current_instruction.operand0)];
         return;
     }
 }

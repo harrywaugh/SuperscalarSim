@@ -1,12 +1,15 @@
-.variable 10
+.a 2
+.b 3
+.c 0
+
 
 main:
-	li $t2, 3
-	li $t3, 4
-	add $t4, $t2, $t3
-	sub $t5, $t3, $t2
-	add $t6, $t5, $t4
-	sw $t6, 0(50)
+	la $t0, b
+	lw $t1, 0($t0)
+	la $t2, a
+	lw $t3, 0($t2)
+	add $t4, $t1, $t3
+	la $t5, c
+	sw $t4, 0($t5)
 	exit
 	
-for:

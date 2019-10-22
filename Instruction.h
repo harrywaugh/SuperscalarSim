@@ -7,9 +7,6 @@ using namespace std;
 class Instruction {
 
 private:
-    
-    
-
     int iterate_until_delim(int index, string line);
     void debug(int pin);
     void correct_mem_syntax();
@@ -26,5 +23,5 @@ public :
     string fn_name;
 
     string to_string();
-    bool is_fn = true;
+    bool is_fn;
 };
