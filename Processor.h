@@ -12,10 +12,11 @@ class Processor
 {
 private:
     int PC;
+    int cycles = 0;
     vector<string> instruction_strings;
     vector<Instruction> instructions;
     map<string, int> fn_map;
-    uint32_t main_memory[100][4] = { {0} };
+    uint32_t main_memory[100] = {0};
     uint32_t registers[32]       = { {0} };
     uint32_t fp_registers[32]    = { {0} };
     map<std::string, int> register_map = {
@@ -28,6 +29,7 @@ private:
         {"$ra", 31},
     };
     void create_fn_map();
+    Instruction fetch_instruction();
     void execute_instruction(Instruction current_instruction);
     void debug_processor();
 
@@ -36,6 +38,7 @@ public:
     ~Processor();
     void addInstruction(string line);
     void incrementPC();
+    void incrementCycles();
     void run_program();
 };
 

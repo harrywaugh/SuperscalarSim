@@ -2,8 +2,15 @@
  
 using namespace std;
 
+
+Instruction::Instruction()  {
+    
+}
+
 Instruction::Instruction(string line)  {
     int pin = 0;
+    int comma = 0;
+
     if (line.at(0) != '\t')  {
         int start_index = 0;
         int current_index = 0;
@@ -20,6 +27,17 @@ Instruction::Instruction(string line)  {
     opcode = line.substr(start_index, current_index-start_index);
     
     
+    start_index = current_index + 1;
+    current_index = start_index;
+    if (current_index >= line.size())  {
+        debug(pin);
+        return;
+    }
+    current_index = iterate_until_delim(current_index, line);
+    if (line.at(current_index-1) == ',')  comma = -1;
+    operand0 = line.substr(start_index, current_index - start_index + comma);
+    comma = 0;
+
 
     start_index = current_index + 1;
     current_index = start_index;
@@ -28,17 +46,9 @@ Instruction::Instruction(string line)  {
         return;
     }
     current_index = iterate_until_delim(current_index, line);
-    operand0 = line.substr(start_index, current_index - start_index - 1);
-
-
-    start_index = current_index + 1;
-    current_index = start_index;
-    if (current_index >= line.size())  {
-        debug(pin);
-        return;
-    }
-    current_index = iterate_until_delim(current_index, line);
-    operand1 = line.substr(start_index, current_index - start_index - 1);
+    if (line.at(current_index-1) == ',')  comma = -1;
+    operand1 = line.substr(start_index, current_index - start_index + comma);
+    comma = 0;
 
 
     start_index = current_index + 1;
@@ -62,7 +72,7 @@ void Instruction::correct_mem_syntax()  {
     while (current_index < operand1.size() && operand1.at(current_index) != '(')  {
         current_index++;
     }
-    operand2 = operand1.substr(current_index+1);
+    operand2 = operand1.substr(current_index + 1, operand1.size() - current_index - 2);
     operand1 = operand1.substr(0, current_index);
 }
 

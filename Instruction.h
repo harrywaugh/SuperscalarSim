@@ -14,7 +14,11 @@ private:
     void debug(int pin);
     void correct_mem_syntax();
 
-public : Instruction(string line);
+public :
+    Instruction(string line);
+    Instruction();
+    ~Instruction();
+
     string opcode   = "";
     string operand0 = "";
     string operand1 = "";
@@ -23,5 +27,4 @@ public : Instruction(string line);
 
     string to_string();
     bool is_fn = true;
-    ~Instruction();
 };
