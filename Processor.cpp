@@ -45,7 +45,10 @@ void Processor::run_program()  {
         debug_processor();
 
         current_instruction = fetch_instruction();
+        incrementCycles();
         execute_instruction(current_instruction);
+        incrementCycles();
+        incrementCycles();
 
         incrementPC();
         
@@ -56,13 +59,11 @@ void Processor::run_program()  {
 }
 
 Instruction Processor::fetch_instruction()  {
-    incrementCycles();
     return instructions.at(PC);
 }
 
 void Processor::execute_instruction(Instruction current_instruction)  {
-    incrementCycles();
-    incrementCycles();
+
     if ( current_instruction.is_fn )  return;
     if ( current_instruction.opcode.compare("li") == 0 ) {
         registers[register_map.at(current_instruction.operand0)] = stoi(current_instruction.operand1);
@@ -77,9 +78,44 @@ void Processor::execute_instruction(Instruction current_instruction)  {
             registers[register_map.at(current_instruction.operand1)] + registers[register_map.at(current_instruction.operand2)];
         return;
     }
+    if ( current_instruction.opcode.compare("addi") == 0 )  {
+        registers[register_map.at(current_instruction.operand0)] =
+            registers[register_map.at(current_instruction.operand1)] + stoi(current_instruction.operand2);
+        return;
+    }
     if ( current_instruction.opcode.compare("sub") == 0 )  {
         registers[register_map.at(current_instruction.operand0)] =
             registers[register_map.at(current_instruction.operand1)] - registers[register_map.at(current_instruction.operand2)];
+        return;
+    }
+    if ( current_instruction.opcode.compare("subi") == 0 )  {
+        registers[register_map.at(current_instruction.operand0)] =
+            registers[register_map.at(current_instruction.operand1)] - stoi(current_instruction.operand2);
+        return;
+    }
+    if ( current_instruction.opcode.compare("mul") == 0 )  {
+        registers[register_map.at(current_instruction.operand0)] =
+            registers[register_map.at(current_instruction.operand1)] * registers[register_map.at(current_instruction.operand2)];
+        return;
+    }
+    if ( current_instruction.opcode.compare("and") == 0 )  {
+        registers[register_map.at(current_instruction.operand0)] =
+            registers[register_map.at(current_instruction.operand1)] & registers[register_map.at(current_instruction.operand2)];
+        return;
+    }
+    if ( current_instruction.opcode.compare("or") == 0 )  {
+        registers[register_map.at(current_instruction.operand0)] =
+            registers[register_map.at(current_instruction.operand1)] | registers[register_map.at(current_instruction.operand2)];
+        return;
+    }
+    if ( current_instruction.opcode.compare("sll") == 0 )  {
+        registers[register_map.at(current_instruction.operand0)] =
+            registers[register_map.at(current_instruction.operand1)] << stoi(current_instruction.operand2);
+        return;
+    }
+    if ( current_instruction.opcode.compare("srl") == 0 )  {
+        registers[register_map.at(current_instruction.operand0)] =
+            registers[register_map.at(current_instruction.operand1)] >> stoi(current_instruction.operand2);
         return;
     }
     if ( current_instruction.opcode.compare("sw") == 0 )  {
