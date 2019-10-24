@@ -8,7 +8,7 @@ Instruction::Instruction()  {
 }
 
 Instruction::Instruction(string line)  {
-    int pin = 1;
+    int pin = 0;
     int comma = 0;
 
     if (line.at(0) != '\t')  {

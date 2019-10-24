@@ -43,7 +43,7 @@ void Processor::addVariable(string line)
 }
 
 void Processor::create_fn_map()  {
-    bool debug_pin = true;
+    bool debug_pin = false;
     for (int i = 0; i < instructions.size(); i++)  {
         if (instructions.at(i).is_fn)  {
             fn_map.insert(pair<string, int>(instructions.at(i).fn_name, i + 1));
@@ -109,6 +109,7 @@ void Processor::execute_instruction(Instruction current_instruction)  {
         return;
     }
     if ( current_instruction.opcode.compare("addi") == 0 )  {
+        cout << stoi(current_instruction.operand2) << endl;
         registers[register_map.at(current_instruction.operand0)] =
             registers[register_map.at(current_instruction.operand1)] + stoi(current_instruction.operand2);
         return;
