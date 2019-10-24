@@ -8,7 +8,7 @@ Instruction::Instruction()  {
 }
 
 Instruction::Instruction(string line)  {
-    int pin = 0;
+    int pin = 1;
     int comma = 0;
 
     if (line.at(0) != '\t')  {
@@ -19,7 +19,6 @@ Instruction::Instruction(string line)  {
         fn_name = line.substr(start_index, current_index-start_index - 1);
         return;
     }
-
     is_fn = false;
 
     int start_index = 1;

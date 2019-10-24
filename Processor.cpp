@@ -43,9 +43,12 @@ void Processor::addVariable(string line)
 }
 
 void Processor::create_fn_map()  {
+    bool debug_pin = true;
     for (int i = 0; i < instructions.size(); i++)  {
         if (instructions.at(i).is_fn)  {
             fn_map.insert(pair<string, int>(instructions.at(i).fn_name, i + 1));
+            if (debug_pin)
+                cout << instructions.at(i).fn_name << " " << fn_map.at(instructions.at(i).fn_name) << endl;
             // instructions.erase(instructions.begin()+i);
             // i--;
         }
@@ -91,7 +94,7 @@ void Processor::execute_instruction(Instruction current_instruction)  {
         return;
     }
     if ( current_instruction.opcode.compare("j") == 0 )  {
-        PC = fn_map.at(current_instruction.operand0);
+        PC = fn_map.at(current_instruction.operand0) - 1;
         return;
     }
     if ( current_instruction.opcode.compare("beq") == 0 )  {
@@ -143,6 +146,10 @@ void Processor::execute_instruction(Instruction current_instruction)  {
     if ( current_instruction.opcode.compare("srl") == 0 )  {
         registers[register_map.at(current_instruction.operand0)] =
             registers[register_map.at(current_instruction.operand1)] >> stoi(current_instruction.operand2);
+        return;
+    }
+    if ( current_instruction.opcode.compare("mv") == 0 )  {
+        registers[register_map.at(current_instruction.operand0)] = registers[register_map.at(current_instruction.operand1)];
         return;
     }
     if ( current_instruction.opcode.compare("lw") == 0 )  {
