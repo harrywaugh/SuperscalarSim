@@ -3,7 +3,6 @@ import os
 import subprocess
 
 def main():
-    print("Running tests....\n")
     path = os.path.dirname(os.path.realpath(__file__))[:-3]
     print("Current directory: " + path)
     tests = glob.glob("programs/*.asm")
