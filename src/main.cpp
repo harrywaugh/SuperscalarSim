@@ -11,8 +11,9 @@ int main(int argn, char *argv[])  {
     Processor processor;
 
     // Print filename and read filename intro string.
+#ifdef DEBUG
     cout << "Program Name: " << filename << endl;
-
+#endif
 
     //Read file line by line
     if (infile.is_open())  {

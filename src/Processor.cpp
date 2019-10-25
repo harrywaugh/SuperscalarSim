@@ -108,8 +108,9 @@ void Processor::run_program()
 #ifdef DEBUG
     PC = -1;
     debug_processor();
-#endif
     cout << "Program Result=" << registers[16] << endl;
+#endif
+    cout << registers[16];
 }
 
 // Get the Instruction represented by the program counter

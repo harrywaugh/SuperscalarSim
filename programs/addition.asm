@@ -11,5 +11,6 @@ main:
 	add $t4, $t1, $t3
 	la $t5, c
 	sw $t4, 0($t5)
+	mv $s0, $t4
 	exit
 	
