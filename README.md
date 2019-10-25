@@ -8,5 +8,3 @@ C to MIPS Compiler:
 http://reliant.colab.duke.edu/c2mips/
 
 Other Useful Links:
-https://github.com/ehsaneam/Advanced-Computer-Architecture
-https://github.com/julienschuermans/simulating-advanced-processors/blob/master/superscalar_processor_OoO/bin/resources/programs/vectorAddition.txt
