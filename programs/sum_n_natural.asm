@@ -9,5 +9,5 @@ for:
 	beq $t0, $t2, end
 	j for
 end:
-	sw $t1, 0(0)
+	mv $s0, $t1
 	exit
