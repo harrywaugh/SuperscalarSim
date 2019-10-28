@@ -136,7 +136,13 @@ void Processor::decode_and_execute_instruction(Instruction current_instruction) 
     if ( current_instruction.opcode.compare("beq") == 0 )  {
         if (registers[register_map.at(current_instruction.operand0)] ==
             registers[register_map.at(current_instruction.operand1)])
-            PC = fn_map.at(current_instruction.operand2) - 1;
+            PC += stoi(current_instruction.operand2) - 1;
+        return;
+    }
+    if ( current_instruction.opcode.compare("blt") == 0 )  {
+        if (registers[register_map.at(current_instruction.operand0)] <
+            registers[register_map.at(current_instruction.operand1)])
+            PC += stoi(current_instruction.operand2) - 1;
         return;
     }
     if ( current_instruction.opcode.compare("add") == 0 )  {
@@ -199,6 +205,10 @@ void Processor::decode_and_execute_instruction(Instruction current_instruction) 
 
     if ( current_instruction.opcode.compare("sw") == 0 )  {
         main_memory[registers[register_map.at(current_instruction.operand2)]] = registers[register_map.at(current_instruction.operand0)];
+        return;
+    }
+
+    if ( current_instruction.opcode.compare("nop") == 0 )  {
         return;
     }
 }

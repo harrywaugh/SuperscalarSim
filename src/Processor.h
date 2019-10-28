@@ -6,6 +6,8 @@
 
 #include "Instruction.h"
 
+// #define DEBUG 1
+
 using namespace std;
 
 class Processor
