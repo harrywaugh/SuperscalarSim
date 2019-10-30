@@ -74,6 +74,39 @@ void Processor::addVariable(string line)
 
 }
 
+void Processor::addArray(string line)  
+{
+    int start_index = 1;
+    int current_index = 1;
+    string arr_name;
+    int length;
+
+    // Split string around white space and store variable name
+    while (current_index < line.size() && line.at(current_index) != ' ')
+        current_index++;
+    arr_name = line.substr(start_index, current_index - start_index);
+    cout << "Array Name " << arr_name << endl;
+
+    // Split string around white space and store variable length
+    current_index++;
+    start_index = current_index;
+    while (current_index < line.size() && line.at(current_index) != ' ')
+        current_index++;
+    length = stoi(line.substr(start_index, current_index - start_index));
+
+    // Split string around white space and store array values
+    uint32_t *arr_pointer = &main_memory[free_mem_pointer];
+    for (int i = 0; i < length; i++)
+    {
+        current_index++;
+        start_index = current_index;
+        while (current_index < line.size() && line.at(current_index) != ' ')
+            current_index++;
+        main_memory[free_mem_pointer++] = stoi(line.substr(start_index, current_index - start_index));
+    }
+    arr_map.insert(pair<string, uint32_t*>(arr_name, arr_pointer));
+}
+
 // Simulate the program on the processor
 void Processor::run_program()  
 {   
@@ -215,6 +248,7 @@ void Processor::decode_and_execute_instruction(Instruction current_instruction) 
 
 void Processor::debug_processor()  {
     map<string, int>::iterator it;
+    map<string, uint32_t*>::iterator it1;
 
     cout << "\n\n###################" << endl;
     cout << "PROCESSOR DEBUG LOG: Total Cycles = " << cycles << endl;
@@ -232,6 +266,13 @@ void Processor::debug_processor()  {
     for (it = var_map.begin(); it != var_map.end(); it++)
     {
         cout << it->first << " -> Mem + " << it->second << endl;
+    }
+
+    cout << "\nArrays : \n" << endl;
+
+    for (it1 = arr_map.begin(); it1 != arr_map.end(); it1++)
+    {
+        cout << it1->first << "[] -> Mem + " << it1->second - &main_memory[0] << endl;
     }
 
     cout << "\nInstructions : \n" << endl;

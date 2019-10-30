@@ -24,6 +24,9 @@ int main(int argn, char *argv[])  {
             // Check if line is variable
             else if (line[0] == '.') 
                 processor.addVariable(line);
+            // Check if line is array
+            else if (line[0] == '|')
+                processor.addArray(line);
             // Line is an instruction
             else if (line[line.size()-1] == ':')
                 processor.addFunction(line);

@@ -20,7 +20,8 @@ def main():
         file = open(path + "programs/" + result_fname,"r")
         result = int(file.read())
 
-        result_str = ("(" + str(guess) + " == " + str(result) + ") PASSED\n") if (result==guess) else ("(" + str(guess) + " != " + str(result) + ") FAILED\n")
+        result_str = ("(" + str(guess) + " == " + str(result) + ") PASSED\n") if (result==guess) \
+                                                                              else ("(" + str(guess) + " != " + str(result) + ") FAILED\n")
 
         print("Test " + short_testname + ": \n\t" + result_str)
 
