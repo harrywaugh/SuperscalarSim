@@ -6,9 +6,10 @@
 
 #include "Instruction.h"
 
-#define DEBUG 1
+// #define DEBUG 1
 
 using namespace std;
+
 
 class Processor
 {
@@ -29,6 +30,51 @@ private:
         {"$s0", 16}, {"$s1", 17}, {"$s2", 18}, {"$s3", 19}, {"$s4", 20}, {"$s5", 21}, {"$s6", 22}, {"$s7", 23},
         {"$t8", 24}, {"$t9", 25},
         {"$ra", 31},
+    };
+
+    enum OPERATION
+    {
+        LI,
+        EXIT,
+        J,
+        BEQ,
+        BLT,
+        ADD,
+        ADDI,
+        SUB,
+        SUBI,
+        MUL,
+        AND,
+        OR,
+        SLL,
+        SRL,
+        MV,
+        LW,
+        LA,
+        SW,
+        NOP
+    };
+
+    map<string, OPERATION> string_to_op_map = {
+        {"exit", EXIT},
+        {"li", LI},
+        {"j", J},
+        {"beq", BEQ},
+        {"blt", BLT},
+        {"add", ADD},
+        {"addi", ADDI},
+        {"sub", SUB},
+        {"subi", SUBI},
+        {"mul", MUL},
+        {"and", AND},
+        {"or", OR},
+        {"sll", SLL},
+        {"srl", SRL},
+        {"mv", MV},
+        {"lw", LW},
+        {"la", LA},
+        {"sw", SW},
+        {"nop", NOP}
     };
 
     uint32_t main_memory[100] = {0};

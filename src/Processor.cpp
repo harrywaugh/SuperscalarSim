@@ -154,95 +154,76 @@ Instruction Processor::fetch_instruction()  {
 // If statements identify the correct operation, and then execute it.
 void Processor::decode_and_execute_instruction(Instruction current_instruction)  {
 
-    if ( current_instruction.opcode.compare("li") == 0 ) {
-        registers[register_map.at(current_instruction.operand0)] = stoi(current_instruction.operand1);
-        return;
-    }
-    if ( current_instruction.opcode.compare("exit") == 0 )  {
-        registers[31] = 1;
-        return;
-    }
-    if ( current_instruction.opcode.compare("j") == 0 )  {
-        PC = fn_map.at(current_instruction.operand0) - 1;
-        return;
-    }
-    if ( current_instruction.opcode.compare("beq") == 0 )  {
-        if (registers[register_map.at(current_instruction.operand0)] ==
-            registers[register_map.at(current_instruction.operand1)])
-            PC += stoi(current_instruction.operand2) - 1;
-        return;
-    }
-    if ( current_instruction.opcode.compare("blt") == 0 )  {
-        if (registers[register_map.at(current_instruction.operand0)] <
-            registers[register_map.at(current_instruction.operand1)])
-            PC += stoi(current_instruction.operand2) - 1;
-        return;
-    }
-    if ( current_instruction.opcode.compare("add") == 0 )  {
-        registers[register_map.at(current_instruction.operand0)] =
-            registers[register_map.at(current_instruction.operand1)] + registers[register_map.at(current_instruction.operand2)];
-        return;
-    }
-    if ( current_instruction.opcode.compare("addi") == 0 )  {
-        registers[register_map.at(current_instruction.operand0)] =
-            registers[register_map.at(current_instruction.operand1)] + stoi(current_instruction.operand2);
-        return;
-    }
-    if ( current_instruction.opcode.compare("sub") == 0 )  {
-        registers[register_map.at(current_instruction.operand0)] =
-            registers[register_map.at(current_instruction.operand1)] - registers[register_map.at(current_instruction.operand2)];
-        return;
-    }
-    if ( current_instruction.opcode.compare("subi") == 0 )  {
-        registers[register_map.at(current_instruction.operand0)] =
-            registers[register_map.at(current_instruction.operand1)] - stoi(current_instruction.operand2);
-        return;
-    }
-    if ( current_instruction.opcode.compare("mul") == 0 )  {
-        registers[register_map.at(current_instruction.operand0)] =
-            registers[register_map.at(current_instruction.operand1)] * registers[register_map.at(current_instruction.operand2)];
-        return;
-    }
-    if ( current_instruction.opcode.compare("and") == 0 )  {
-        registers[register_map.at(current_instruction.operand0)] =
-            registers[register_map.at(current_instruction.operand1)] & registers[register_map.at(current_instruction.operand2)];
-        return;
-    }
-    if ( current_instruction.opcode.compare("or") == 0 )  {
-        registers[register_map.at(current_instruction.operand0)] =
-            registers[register_map.at(current_instruction.operand1)] | registers[register_map.at(current_instruction.operand2)];
-        return;
-    }
-    if ( current_instruction.opcode.compare("sll") == 0 )  {
-        registers[register_map.at(current_instruction.operand0)] =
-            registers[register_map.at(current_instruction.operand1)] << stoi(current_instruction.operand2);
-        return;
-    }
-    if ( current_instruction.opcode.compare("srl") == 0 )  {
-        registers[register_map.at(current_instruction.operand0)] =
-            registers[register_map.at(current_instruction.operand1)] >> stoi(current_instruction.operand2);
-        return;
-    }
-    if ( current_instruction.opcode.compare("mv") == 0 )  {
-        registers[register_map.at(current_instruction.operand0)] = registers[register_map.at(current_instruction.operand1)];
-        return;
-    }
-    if ( current_instruction.opcode.compare("lw") == 0 )  {
-        registers[register_map.at(current_instruction.operand0)] = main_memory[registers[register_map.at(current_instruction.operand2)]];
-        return;
-    }
-    if (current_instruction.opcode.compare("la") == 0) {
-        registers[register_map.at(current_instruction.operand0)] = var_map.at(current_instruction.operand1);
-        return;
-    }
-
-    if ( current_instruction.opcode.compare("sw") == 0 )  {
-        main_memory[registers[register_map.at(current_instruction.operand2)]] = registers[register_map.at(current_instruction.operand0)];
-        return;
-    }
-
-    if ( current_instruction.opcode.compare("nop") == 0 )  {
-        return;
+    switch (string_to_op_map[current_instruction.opcode]) {
+        case LI:
+            registers[register_map.at(current_instruction.operand0)] = stoi(current_instruction.operand1);
+            break;
+        case EXIT:
+            registers[31] = 1;
+            break;
+        case J:
+            PC = fn_map.at(current_instruction.operand0) - 1;
+            break;
+        case BEQ:
+            if (registers[register_map.at(current_instruction.operand0)] ==
+                registers[register_map.at(current_instruction.operand1)])
+                PC += stoi(current_instruction.operand2) - 1;
+            break;
+        case BLT:
+            if (registers[register_map.at(current_instruction.operand0)] <
+                registers[register_map.at(current_instruction.operand1)])
+                PC += stoi(current_instruction.operand2) - 1;
+            break;
+        case ADD:
+            registers[register_map.at(current_instruction.operand0)] =
+                registers[register_map.at(current_instruction.operand1)] + registers[register_map.at(current_instruction.operand2)];
+            break;
+        case  ADDI:
+            registers[register_map.at(current_instruction.operand0)] =
+                registers[register_map.at(current_instruction.operand1)] + stoi(current_instruction.operand2);
+            break;
+        case SUB:
+            registers[register_map.at(current_instruction.operand0)] =
+                registers[register_map.at(current_instruction.operand1)] - registers[register_map.at(current_instruction.operand2)];
+            break;
+        case SUBI:
+            registers[register_map.at(current_instruction.operand0)] =
+                registers[register_map.at(current_instruction.operand1)] - stoi(current_instruction.operand2);
+            break;
+        case MUL:
+            registers[register_map.at(current_instruction.operand0)] =
+                registers[register_map.at(current_instruction.operand1)] * registers[register_map.at(current_instruction.operand2)];
+            break;
+        case AND:
+            registers[register_map.at(current_instruction.operand0)] =
+                registers[register_map.at(current_instruction.operand1)] & registers[register_map.at(current_instruction.operand2)];
+            break;
+        case OR:
+            registers[register_map.at(current_instruction.operand0)] =
+                registers[register_map.at(current_instruction.operand1)] | registers[register_map.at(current_instruction.operand2)];
+            break;
+        case SLL:
+            registers[register_map.at(current_instruction.operand0)] =
+                registers[register_map.at(current_instruction.operand1)] << stoi(current_instruction.operand2);
+            break;
+        case SRL:
+            registers[register_map.at(current_instruction.operand0)] =
+                registers[register_map.at(current_instruction.operand1)] >> stoi(current_instruction.operand2);
+            break;
+        case MV:
+            registers[register_map.at(current_instruction.operand0)] = registers[register_map.at(current_instruction.operand1)];
+            break;
+        case LW:
+            registers[register_map.at(current_instruction.operand0)] = main_memory[registers[register_map.at(current_instruction.operand2)]];
+            break;
+        case  LA:
+            registers[register_map.at(current_instruction.operand0)] = var_map.at(current_instruction.operand1);
+            break;
+        case SW:
+            main_memory[registers[register_map.at(current_instruction.operand2)]] = registers[register_map.at(current_instruction.operand0)];
+            break;
+        case NOP:
+            break;
     }
 }
 
