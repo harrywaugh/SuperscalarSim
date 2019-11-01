@@ -15,5 +15,16 @@ make
 ./simulator.exe programs/<program_name>.asm>
 ```
 
-where:
+**where**:
     program_name = [addition, bubble_sort, factorial, gcd, sum_n_natural]
+
+
+Currently the processor is in **debug** mode, and you can step through each instruction by pressing 'Enter'. 
+At each step, the processor will output the current values in main memory, the register values, and more info on any functions, 
+variables or arrays that the program is using. 
+
+The program will also display the current instruction and the number of cycles that have currently been run.
+
+
+**Note:**
+The processor currently has 3 stages: fetch -> decode -> execute.
