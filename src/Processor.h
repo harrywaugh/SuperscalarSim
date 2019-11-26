@@ -6,7 +6,7 @@
 
 #include "Instruction.h"
 
-#define DEBUG 1
+// #define DEBUG 0
 
 using namespace std;
 
@@ -20,8 +20,7 @@ private:
 
     vector<Instruction> instructions;
     map<string, int> fn_map;
-    map<string, int> var_map;
-    map<string, uint32_t*> arr_map;
+    map<string, uint32_t> var_map;
     map<std::string, int> register_map = {
         {"$zero", 0},
         {"$v0", 2}, {"$v1", 3},

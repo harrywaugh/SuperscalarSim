@@ -2,7 +2,7 @@
 
 main:
 	la $t0, n
-	lw $a0, 0($t0)
+	lw $a0, $zero($t0)
 	mv $a1, $a0
 	j factorial
 

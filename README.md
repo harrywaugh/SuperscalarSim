@@ -12,7 +12,7 @@ http://reliant.colab.duke.edu/c2mips/
 The code can be compiled by running the following:
 ```shell
 make
-./simulator.exe programs/<program_name>.asm>
+./simulator.exe programs/<program_name>.asm
 ```
 
 **where**:
@@ -23,7 +23,7 @@ Currently the processor is in **debug** mode, and you can step through each inst
 At each step, the processor will output the current values in main memory, the register values, and more info on any functions, 
 variables or arrays that the program is using. 
 
-The program will also display the current instruction and the number of cycles that have currently been run.
+The program will also display the current instruction and the number of cycles that have been run.
 
 
 **Note:**

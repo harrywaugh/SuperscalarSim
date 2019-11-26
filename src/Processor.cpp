@@ -70,8 +70,7 @@ void Processor::addVariable(string line)
 
     // Put value in memory, and store <label, pointer to mem> in HashMap
     main_memory[free_mem_pointer] = value;
-    var_map.insert(pair<string, int>(var_name, free_mem_pointer++));
-
+    var_map.insert(pair<string, uint32_t>(var_name, free_mem_pointer++));
 }
 
 void Processor::addArray(string line)  
@@ -104,7 +103,7 @@ void Processor::addArray(string line)
             current_index++;
         main_memory[free_mem_pointer++] = stoi(line.substr(start_index, current_index - start_index));
     }
-    arr_map.insert(pair<string, uint32_t*>(arr_name, arr_pointer));
+    var_map.insert(pair<string, uint32_t>(arr_name, free_mem_pointer - length));
 }
 
 // Simulate the program on the processor
@@ -152,7 +151,8 @@ Instruction Processor::fetch_instruction()  {
 }
 
 // If statements identify the correct operation, and then execute it.
-void Processor::decode_and_execute_instruction(Instruction current_instruction)  {
+void Processor::decode_and_execute_instruction(Instruction current_instruction)  
+{
 
     switch (string_to_op_map[current_instruction.opcode]) {
         case LI:
@@ -214,22 +214,25 @@ void Processor::decode_and_execute_instruction(Instruction current_instruction) 
             registers[register_map.at(current_instruction.operand0)] = registers[register_map.at(current_instruction.operand1)];
             break;
         case LW:
-            registers[register_map.at(current_instruction.operand0)] = main_memory[registers[register_map.at(current_instruction.operand2)]];
+            registers[register_map.at(current_instruction.operand0)] = main_memory[registers[register_map.at(current_instruction.operand2)] +
+                                                                                   registers[register_map.at(current_instruction.operand1)]];
             break;
-        case  LA:
+        case LA:
             registers[register_map.at(current_instruction.operand0)] = var_map.at(current_instruction.operand1);
             break;
         case SW:
-            main_memory[registers[register_map.at(current_instruction.operand2)]] = registers[register_map.at(current_instruction.operand0)];
+            main_memory[registers[register_map.at(current_instruction.operand2)] +
+                        registers[register_map.at(current_instruction.operand1)]] = registers[register_map.at(current_instruction.operand0)];
             break;
         case NOP:
             break;
     }
 }
 
-void Processor::debug_processor()  {
+void Processor::debug_processor()  
+{
     map<string, int>::iterator it;
-    map<string, uint32_t*>::iterator it1;
+    map<string, uint32_t>::iterator it1;
 
     cout << "\n\n###################" << endl;
     cout << "PROCESSOR DEBUG LOG: Total Cycles = " << cycles << endl;
@@ -242,18 +245,11 @@ void Processor::debug_processor()  {
         cout << it->first << " -> " << it->second << endl;
     }
 
-    cout << "\nVariables : \n" << endl;
+    cout << "\nArrays and Variables : \n" << endl;
 
-    for (it = var_map.begin(); it != var_map.end(); it++)
+    for (it1 = var_map.begin(); it1 != var_map.end(); it1++)
     {
-        cout << it->first << " -> Mem + " << it->second << endl;
-    }
-
-    cout << "\nArrays : \n" << endl;
-
-    for (it1 = arr_map.begin(); it1 != arr_map.end(); it1++)
-    {
-        cout << it1->first << "[] -> Mem + " << it1->second - &main_memory[0] << endl;
+        cout << it1->first << " -> &Mem + " << it1->second <<  endl;
     }
 
     cout << "\nInstructions : \n" << endl;

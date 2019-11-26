@@ -3,9 +3,9 @@
 
 main:
 	la $t0, a
-	lw $a0, 0($t0)
+	lw $a0, $zero($t0)
 	la $t0, b
-	lw $a1, 0($t0)
+	lw $a1, $zero($t0)
 	j gcd
 
 gcd:
