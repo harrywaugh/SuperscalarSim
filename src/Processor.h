@@ -3,10 +3,13 @@
 #include <sstream>
 #include <vector>
 #include <map>
+#include <chrono>
+#include <ctime>
 
 #include "Instruction.h"
 
 // #define DEBUG 0
+#define PRINT_STATS 0
 
 using namespace std;
 
@@ -16,6 +19,7 @@ class Processor
 private:
     int PC;
     int cycles = 0;
+    int executed_instructions = 0;
     int free_mem_pointer = 0;
 
     vector<Instruction> instructions;
@@ -36,6 +40,7 @@ private:
         LI,
         EXIT,
         J,
+        RETURN,
         BEQ,
         BLT,
         ADD,
@@ -58,6 +63,7 @@ private:
         {"exit", EXIT},
         {"li", LI},
         {"j", J},
+        {"return", RETURN},
         {"beq", BEQ},
         {"blt", BLT},
         {"add", ADD},
@@ -73,8 +79,7 @@ private:
         {"lw", LW},
         {"la", LA},
         {"sw", SW},
-        {"nop", NOP}
-    };
+        {"nop", NOP}};
 
     uint32_t main_memory[100] = {0};
     uint32_t registers[32]       = { {0} };

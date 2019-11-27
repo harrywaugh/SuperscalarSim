@@ -84,7 +84,6 @@ void Processor::addArray(string line)
     while (current_index < line.size() && line.at(current_index) != ' ')
         current_index++;
     arr_name = line.substr(start_index, current_index - start_index);
-    cout << "Array Name " << arr_name << endl;
 
     // Split string around white space and store variable length
     current_index++;
@@ -113,8 +112,10 @@ void Processor::run_program()
     Instruction current_instruction;
     PC = fn_map.at("main");
 
+    auto start = std::chrono::system_clock::now();
+
     // While register exit pin is 0
-    while ( registers[31] == 0 )  
+    while ( registers[31] != -1 )  
     {
         // Print prcoessor state, and wait for 'Enter' keypress
 #ifdef DEBUG
@@ -124,17 +125,20 @@ void Processor::run_program()
 
         // Fetch stage
         current_instruction = fetch_instruction();
-        incrementCycles();
 
         // Decode and Execute Stages
-        incrementCycles();
         decode_and_execute_instruction(current_instruction);
-        incrementCycles();
 
         //Increment program counter
         incrementPC();
         
     }
+
+    // Some computation here
+    auto end = std::chrono::system_clock::now();
+
+    std::chrono::duration<double> elapsed_seconds = end - start;
+    std::time_t end_time = std::chrono::system_clock::to_time_t(end);
 
     // Print prcoessor state and exit
 #ifdef DEBUG
@@ -142,11 +146,21 @@ void Processor::run_program()
     debug_processor();
     cout << "Program Result=" << registers[16] << endl;
 #endif
+
+#ifdef PRINT_STATS
+    cout << "Time Elapsed: " << elapsed_seconds.count() << endl;
+    cout << "Executed Instructions = " << executed_instructions << endl;
+    cout << "Total Cycles = " << cycles << endl;
+    cout << "Instructions per Cycle = " << (float)(executed_instructions) / (float)(cycles) << endl;
+    cout << "Instructions per Second = " << (float)(executed_instructions) / (float)(elapsed_seconds.count()) << endl;
+#endif
+
     cout << registers[16];
 }
 
 // Get the Instruction represented by the program counter
 Instruction Processor::fetch_instruction()  {
+    incrementCycles();
     return instructions.at(PC);
 }
 
@@ -159,10 +173,14 @@ void Processor::decode_and_execute_instruction(Instruction current_instruction)
             registers[register_map.at(current_instruction.operand0)] = stoi(current_instruction.operand1);
             break;
         case EXIT:
-            registers[31] = 1;
+            registers[31] = -1;
             break;
         case J:
+            registers[31] = PC;
             PC = fn_map.at(current_instruction.operand0) - 1;
+            break;
+        case RETURN:
+            PC = registers[31];
             break;
         case BEQ:
             if (registers[register_map.at(current_instruction.operand0)] ==
@@ -227,6 +245,8 @@ void Processor::decode_and_execute_instruction(Instruction current_instruction)
         case NOP:
             break;
     }
+    cycles+=2;
+    executed_instructions++;
 }
 
 void Processor::debug_processor()  

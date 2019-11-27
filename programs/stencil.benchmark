@@ -1,0 +1,47 @@
+|img 16 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1
+|tmp 16 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+
+.niters 100
+.nx 4
+.ny 4
+
+main:
+	la $a0, img
+	la $a1, tmp
+	li $a2, 0
+	la $t0, niters
+	lw $a3, $zero($t0)
+	la $t0, ny
+	lw $s0, $zero($t0)
+	la $t0, nx
+	lw $s2, $zero($t0)
+	j mainfor
+
+mainfor:
+	j stencilcol
+	mv $t0, $a0
+	mv $a0, $a1
+	mv $a1, $t0
+	j stencilcol
+	addi $a2, $a2, 1
+	blt $a2, $a3, -6
+	exit
+
+stencilcol:
+	mv $t9, $ra
+	j stencilrow
+	addi $s1, $s1, 1
+	blt $s1, $s0, -2
+	mv $ra, $t9
+	mv $s1, $zero
+	return
+
+stencilrow:
+	mul $s4, $s2, $s1
+	lw $t2, $s4($a0)
+	sw $t2, $s4($a1)
+	addi $s4, $s4, 1
+	addi $s3, $s3, 1
+	blt $s3, $s2, -4
+	mv $s3, $zero
+	return
