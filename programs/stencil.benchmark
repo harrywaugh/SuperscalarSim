@@ -39,9 +39,15 @@ stencilcol:
 stencilrow:
 	mul $s4, $s2, $s1
 	lw $t2, $s4($a0)
+	muli $t2, $t2, 6
+	beq $s3, $zero, 4
+	subi $t3, $s4, 1
+	lw $t3, $t3($a0)
+	add $t2, $t2, $t3
+	divi $t2, $t2, 10
 	sw $t2, $s4($a1)
 	addi $s4, $s4, 1
 	addi $s3, $s3, 1
-	blt $s3, $s2, -4
+	blt $s3, $s2, -10
 	mv $s3, $zero
 	return

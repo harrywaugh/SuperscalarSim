@@ -212,6 +212,14 @@ void Processor::decode_and_execute_instruction(Instruction current_instruction)
             registers[register_map.at(current_instruction.operand0)] =
                 registers[register_map.at(current_instruction.operand1)] * registers[register_map.at(current_instruction.operand2)];
             break;
+        case MULI:
+            registers[register_map.at(current_instruction.operand0)] =
+                registers[register_map.at(current_instruction.operand1)] * stoi(current_instruction.operand2);
+            break;
+        case DIVI:
+            registers[register_map.at(current_instruction.operand0)] =
+                registers[register_map.at(current_instruction.operand1)] / stoi(current_instruction.operand2);
+            break;
         case AND:
             registers[register_map.at(current_instruction.operand0)] =
                 registers[register_map.at(current_instruction.operand1)] & registers[register_map.at(current_instruction.operand2)];
