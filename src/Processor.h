@@ -81,7 +81,7 @@ private:
         {"sw", SW},
         {"nop", NOP}};
 
-    uint32_t main_memory[100] = {0};
+    uint32_t main_memory[1024] = {0};
     uint32_t registers[32]       = { {0} };
     uint32_t fp_registers[32]    = { {0} };
     
