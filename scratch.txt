@@ -1,0 +1,19 @@
+	beq $s3, $zero, 4
+	subi $t3, $s4, 1
+	lw.f $f2, $t3($a0)
+	add.f $f0, $f0, $f2
+
+    beq $s3, $t4, 4
+	addi $t3, $s4, 1
+	lw.f $f2, $t3($a0)
+	add.f $f0, $f0, $f2
+
+    beq $s1, $zero, 4
+	sub $t3, $s4, $s0
+	lw.f $f2, $t3($a0)
+	add.f $f0, $f0, $f2
+
+    beq $s1, $t4, 4
+	add $t3, $s4, $s2
+	lw.f $f2, $t3($a0)
+	add.f $f0, $f0, $f2

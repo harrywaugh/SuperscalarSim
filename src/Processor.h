@@ -5,11 +5,13 @@
 #include <map>
 #include <chrono>
 #include <ctime>
+#include <iomanip>
 
 #include "Instruction.h"
 
 // #define DEBUG 0
-#define PRINT_STATS 0
+// #define PRINT_STATS 0
+// #define PRINT_MEM_TO_BITMAP
 
 using namespace std;
 
@@ -152,6 +154,8 @@ public:
     void incrementCycles();
 
     void run_program();
+
+    void output_image(char *filename, const int nx, const int ny, uint32_t* image);
 };
 
 

@@ -13,6 +13,16 @@ Processor::~Processor()
 {
 }
 
+template< typename T >
+std::string int_to_hex( T i )
+{
+  std::stringstream stream;
+  stream << "0x" 
+         << std::setfill ('0') << std::setw(sizeof(T)) 
+         << std::hex << i;
+  return stream.str();
+}
+
 // Increment the program counter
 void Processor::incrementPC()  
 {
@@ -100,7 +110,15 @@ void Processor::addArray(string line)
         start_index = current_index;
         while (current_index < line.size() && line.at(current_index) != ' ')
             current_index++;
-        main_memory[free_mem_pointer++] = stoi(line.substr(start_index, current_index - start_index));
+        if (arr_name[0] == 'f')  
+        {
+            float tmp = stof(line.substr(start_index, current_index - start_index));
+            memcpy(&main_memory[free_mem_pointer++], &tmp, sizeof(float));
+        }
+        else 
+        {
+            main_memory[free_mem_pointer++] = stoi(line.substr(start_index, current_index - start_index));
+        }
     }
     var_map.insert(pair<string, uint32_t>(arr_name, free_mem_pointer - length));
 }
@@ -111,6 +129,9 @@ void Processor::run_program()
     // Create variable to store current instruction, set program counter to point at main function
     Instruction current_instruction;
     PC = fn_map.at("main");
+
+    output_image("before.pgm", 16, 16, &main_memory[0]);
+
 
     auto start = std::chrono::system_clock::now();
 
@@ -147,6 +168,8 @@ void Processor::run_program()
     cout << "Program Result=" << registers[16] << endl;
 #endif
 
+    
+
 #ifdef PRINT_STATS
     cout << "Time Elapsed: " << elapsed_seconds.count() << endl;
     cout << "Executed Instructions = " << executed_instructions << endl;
@@ -156,6 +179,8 @@ void Processor::run_program()
 #endif
 
     cout << registers[16];
+
+    output_image("after.pgm", 16, 16, &main_memory[0]);
 }
 
 // Get the Instruction represented by the program counter
@@ -340,4 +365,42 @@ void Processor::debug_processor()
     }
 
     cout << endl << endl;
+}
+
+// Routine to output the image in Netpbm grayscale binary image format
+void Processor::output_image(char *file_name, const int nx, const int ny, uint32_t* image)
+{
+    // Open output file
+    FILE* fp = fopen(file_name, "w");
+    if (!fp) {
+        fprintf(stderr, "Error: Could not open %s\n", file_name);
+        exit(EXIT_FAILURE);
+    }
+
+    // Ouptut image header
+    fprintf(fp, "P5 %d %d 255\n", nx, ny);
+
+    // Calculate maximum value of image
+    // This is used to rescale the values
+    // to a range of 0-255 for output
+    float maximum = 0.0f;
+    for (int j = 0; j < ny; ++j) {
+        for (int i = 0; i < nx; ++i) {
+            float tmp;
+            memcpy(&tmp, &image[j + i * nx], sizeof(float));
+            if (tmp > maximum) maximum = tmp;
+        }
+    }
+
+    // Output image, converting to numbers 0-255
+    for (int j = 0; j < ny; ++j) {
+        for (int i = 0; i < nx; ++i) {
+            float tmp;
+            memcpy(&tmp, &image[j + i * nx], sizeof(float));
+            fputc((char)(255.0 * tmp / maximum), fp);
+        }
+    }
+
+    // Close the file
+    fclose(fp);
 }
