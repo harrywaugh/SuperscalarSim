@@ -169,9 +169,6 @@ void Processor::decode_and_execute_instruction(Instruction current_instruction)
 {
 
     switch (string_to_op_map[current_instruction.opcode]) {
-        case LI:
-            registers[register_map.at(current_instruction.operand0)] = stoi(current_instruction.operand1);
-            break;
         case EXIT:
             registers[31] = -1;
             break;
@@ -196,9 +193,17 @@ void Processor::decode_and_execute_instruction(Instruction current_instruction)
             registers[register_map.at(current_instruction.operand0)] =
                 registers[register_map.at(current_instruction.operand1)] + registers[register_map.at(current_instruction.operand2)];
             break;
+        case ADD_F:
+            fp_registers[fp_register_map.at(current_instruction.operand0)] =
+                fp_registers[fp_register_map.at(current_instruction.operand1)] + fp_registers[fp_register_map.at(current_instruction.operand2)];
+            break;
         case  ADDI:
             registers[register_map.at(current_instruction.operand0)] =
                 registers[register_map.at(current_instruction.operand1)] + stoi(current_instruction.operand2);
+            break;
+        case  ADDI_F:
+            fp_registers[fp_register_map.at(current_instruction.operand0)] =
+                fp_registers[fp_register_map.at(current_instruction.operand1)] + stof(current_instruction.operand2);
             break;
         case SUB:
             registers[register_map.at(current_instruction.operand0)] =
@@ -216,9 +221,17 @@ void Processor::decode_and_execute_instruction(Instruction current_instruction)
             registers[register_map.at(current_instruction.operand0)] =
                 registers[register_map.at(current_instruction.operand1)] * stoi(current_instruction.operand2);
             break;
+        case MULI_F:
+            fp_registers[fp_register_map.at(current_instruction.operand0)] =
+                fp_registers[fp_register_map.at(current_instruction.operand1)] * stof(current_instruction.operand2);
+            break;
         case DIVI:
             registers[register_map.at(current_instruction.operand0)] =
                 registers[register_map.at(current_instruction.operand1)] / stoi(current_instruction.operand2);
+            break;
+        case DIVI_F:
+            fp_registers[fp_register_map.at(current_instruction.operand0)] =
+                fp_registers[fp_register_map.at(current_instruction.operand1)] / stof(current_instruction.operand2);
             break;
         case AND:
             registers[register_map.at(current_instruction.operand0)] =
@@ -239,9 +252,20 @@ void Processor::decode_and_execute_instruction(Instruction current_instruction)
         case MV:
             registers[register_map.at(current_instruction.operand0)] = registers[register_map.at(current_instruction.operand1)];
             break;
+        case LI:
+            registers[register_map.at(current_instruction.operand0)] = stoi(current_instruction.operand1);
+            break;
+        case LI_F:
+            fp_registers[fp_register_map.at(current_instruction.operand0)] = stof(current_instruction.operand1);
+            break;
         case LW:
             registers[register_map.at(current_instruction.operand0)] = main_memory[registers[register_map.at(current_instruction.operand2)] +
                                                                                    registers[register_map.at(current_instruction.operand1)]];
+            break;
+        case LW_F:
+            memcpy(&fp_registers[fp_register_map.at(current_instruction.operand0)], 
+                   &main_memory[registers[register_map.at(current_instruction.operand2)] + registers[register_map.at(current_instruction.operand1)]],
+                   sizeof(float));
             break;
         case LA:
             registers[register_map.at(current_instruction.operand0)] = var_map.at(current_instruction.operand1);
@@ -249,6 +273,11 @@ void Processor::decode_and_execute_instruction(Instruction current_instruction)
         case SW:
             main_memory[registers[register_map.at(current_instruction.operand2)] +
                         registers[register_map.at(current_instruction.operand1)]] = registers[register_map.at(current_instruction.operand0)];
+            break;
+        case SW_F:
+            memcpy(&main_memory[registers[register_map.at(current_instruction.operand2)] + registers[register_map.at(current_instruction.operand1)]],
+                   &fp_registers[fp_register_map.at(current_instruction.operand0)], 
+                   sizeof(float));
             break;
         case NOP:
             break;

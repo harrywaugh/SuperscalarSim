@@ -8,7 +8,7 @@
 
 #include "Instruction.h"
 
-#define DEBUG 0
+// #define DEBUG 0
 #define PRINT_STATS 0
 
 using namespace std;
@@ -70,56 +70,70 @@ private:
     enum OPERATION
     {
         LI,
+        LI_F,
         EXIT,
         J,
         RETURN,
         BEQ,
         BLT,
-        ADD,
-        ADDI,
+        ADD,        
+        ADD_F,
+        ADDI,        
+        ADDI_F,
         SUB,
         SUBI,
         MUL,
         MULI,
+        MULI_F,
         DIVI,
+        DIVI_F,
         AND,
         OR,
         SLL,
         SRL,
         MV,
         LW,
+        LW_F,
         LA,
         SW,
+        SW_F,
         NOP
     };
 
     map<string, OPERATION> string_to_op_map = {
         {"exit", EXIT},
         {"li", LI},
+        {"li.f", LI_F},
         {"j", J},
         {"return", RETURN},
         {"beq", BEQ},
         {"blt", BLT},
-        {"add", ADD},
+        {"add", ADD},        
+        {"add.f", ADD_F},
         {"addi", ADDI},
+        {"addi.f", ADDI_F},
         {"sub", SUB},
         {"subi", SUBI},
         {"mul", MUL},
         {"muli", MULI},
+        {"muli.f", MULI_F},
         {"divi", DIVI},
+        {"divi.f", DIVI_F},
         {"and", AND},
         {"or", OR},
         {"sll", SLL},
         {"srl", SRL},
         {"mv", MV},
         {"lw", LW},
+        {"lw.f", LW_F},
         {"la", LA},
         {"sw", SW},
+        {"sw.f", SW_F},
         {"nop", NOP}};
 
     uint32_t main_memory[1024] = {0};
     uint32_t registers[32]       = { {0} };
-    uint32_t fp_registers[32]    = { {0} };
+    float fp_registers[32]    = { {0} };
     
     // void create_fn_map();
     Instruction fetch_instruction();
