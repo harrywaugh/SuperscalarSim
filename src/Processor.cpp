@@ -286,23 +286,28 @@ void Processor::decode_and_execute_instruction(Instruction current_instruction)
         case LW:
             registers[register_map.at(current_instruction.operand0)] = main_memory[registers[register_map.at(current_instruction.operand2)] +
                                                                                    registers[register_map.at(current_instruction.operand1)]];
+            cycles+=2;
             break;
         case LW_F:
             memcpy(&fp_registers[fp_register_map.at(current_instruction.operand0)], 
                    &main_memory[registers[register_map.at(current_instruction.operand2)] + registers[register_map.at(current_instruction.operand1)]],
                    sizeof(float));
+            cycles+=2;
             break;
         case LA:
             registers[register_map.at(current_instruction.operand0)] = var_map.at(current_instruction.operand1);
+            cycles+=2;
             break;
         case SW:
             main_memory[registers[register_map.at(current_instruction.operand2)] +
                         registers[register_map.at(current_instruction.operand1)]] = registers[register_map.at(current_instruction.operand0)];
+            cycles+=2;
             break;
         case SW_F:
             memcpy(&main_memory[registers[register_map.at(current_instruction.operand2)] + registers[register_map.at(current_instruction.operand1)]],
                    &fp_registers[fp_register_map.at(current_instruction.operand0)], 
                    sizeof(float));
+            cycles+=2;
             break;
         case NOP:
             break;
