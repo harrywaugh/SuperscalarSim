@@ -6,6 +6,27 @@ using namespace std;
 Processor::Processor()  
 {
     PC = 0;
+
+    Instruction nop("\tnop");
+    nop_instruction = nop;
+
+    for (int f=0; f < FETCH_UNITS; f++)
+    {
+        FetchUnit new_fetch_unit;
+        fetch_units.push_back(new_fetch_unit);
+    }
+
+    for (int d=0; d < DECODE_UNITS; d++)
+    {
+        DecodeUnit new_decode_unit;
+        decode_units.push_back(new_decode_unit);
+    }
+
+    for (int e=0; e < EXECUTE_UNITS; e++)
+    {
+        ExecuteUnit new_execute_unit;
+        execute_units.push_back(new_execute_unit);
+    }
 }
 
 // Processor Destructor
@@ -26,6 +47,7 @@ std::string int_to_hex( T i )
 // Increment the program counter
 void Processor::incrementPC()  
 {
+    if (PC >= instructions.size()-1)  return;
     PC++;
 }
 
@@ -144,11 +166,14 @@ void Processor::run_program()
         getchar();
 #endif
 
-        // Fetch stage
-        current_instruction = fetch_instruction();
+        printf("Cycle %d\n", cycles);
 
-        // Decode and Execute Stages
-        decode_and_execute_instruction(current_instruction);
+
+        execute_instructions();
+        decode_instructions();
+        fetch_instructions();
+
+        incrementCycles();
 
         //Increment program counter
         incrementPC();
@@ -184,136 +209,59 @@ void Processor::run_program()
 }
 
 // Get the Instruction represented by the program counter
-Instruction Processor::fetch_instruction()  {
-    incrementCycles();
-    return instructions.at(PC);
+void Processor::fetch_instructions()  {
+    for (int f=0; f < FETCH_UNITS; f++)  
+    {
+        fetch_units.at(f).newInstruction(this);
+        fetch_units.at(f).fetch();
+    }
 }
 
-// If statements identify the correct operation, and then execute it.
-void Processor::decode_and_execute_instruction(Instruction current_instruction)  
+void Processor::decode_instructions()  
 {
+    for (int d=0; d < DECODE_UNITS; d++)  
+    {
+        for (int f=0; f < FETCH_UNITS; f++)  
+        {
 
-    switch (string_to_op_map[current_instruction.opcode]) {
-        case EXIT:
-            registers[31] = -1;
-            break;
-        case J:
-            registers[31] = PC;
-            PC = fn_map.at(current_instruction.operand0) - 1;
-            break;
-        case RETURN:
-            PC = registers[31];
-            break;
-        case BEQ:
-            if (registers[register_map.at(current_instruction.operand0)] ==
-                registers[register_map.at(current_instruction.operand1)])
-                PC += stoi(current_instruction.operand2) - 1;
-            break;
-        case BLT:
-            if (registers[register_map.at(current_instruction.operand0)] <
-                registers[register_map.at(current_instruction.operand1)])
-                PC += stoi(current_instruction.operand2) - 1;
-            break;
-        case ADD:
-            registers[register_map.at(current_instruction.operand0)] =
-                registers[register_map.at(current_instruction.operand1)] + registers[register_map.at(current_instruction.operand2)];
-            break;
-        case ADD_F:
-            fp_registers[fp_register_map.at(current_instruction.operand0)] =
-                fp_registers[fp_register_map.at(current_instruction.operand1)] + fp_registers[fp_register_map.at(current_instruction.operand2)];
-            break;
-        case  ADDI:
-            registers[register_map.at(current_instruction.operand0)] =
-                registers[register_map.at(current_instruction.operand1)] + stoi(current_instruction.operand2);
-            break;
-        case  ADDI_F:
-            fp_registers[fp_register_map.at(current_instruction.operand0)] =
-                fp_registers[fp_register_map.at(current_instruction.operand1)] + stof(current_instruction.operand2);
-            break;
-        case SUB:
-            registers[register_map.at(current_instruction.operand0)] =
-                registers[register_map.at(current_instruction.operand1)] - registers[register_map.at(current_instruction.operand2)];
-            break;
-        case SUBI:
-            registers[register_map.at(current_instruction.operand0)] =
-                registers[register_map.at(current_instruction.operand1)] - stoi(current_instruction.operand2);
-            break;
-        case MUL:
-            registers[register_map.at(current_instruction.operand0)] =
-                registers[register_map.at(current_instruction.operand1)] * registers[register_map.at(current_instruction.operand2)];
-            break;
-        case MULI:
-            registers[register_map.at(current_instruction.operand0)] =
-                registers[register_map.at(current_instruction.operand1)] * stoi(current_instruction.operand2);
-            break;
-        case MULI_F:
-            fp_registers[fp_register_map.at(current_instruction.operand0)] =
-                fp_registers[fp_register_map.at(current_instruction.operand1)] * stof(current_instruction.operand2);
-            break;
-        case DIVI:
-            registers[register_map.at(current_instruction.operand0)] =
-                registers[register_map.at(current_instruction.operand1)] / stoi(current_instruction.operand2);
-            break;
-        case DIVI_F:
-            fp_registers[fp_register_map.at(current_instruction.operand0)] =
-                fp_registers[fp_register_map.at(current_instruction.operand1)] / stof(current_instruction.operand2);
-            break;
-        case AND:
-            registers[register_map.at(current_instruction.operand0)] =
-                registers[register_map.at(current_instruction.operand1)] & registers[register_map.at(current_instruction.operand2)];
-            break;
-        case OR:
-            registers[register_map.at(current_instruction.operand0)] =
-                registers[register_map.at(current_instruction.operand1)] | registers[register_map.at(current_instruction.operand2)];
-            break;
-        case SLL:
-            registers[register_map.at(current_instruction.operand0)] =
-                registers[register_map.at(current_instruction.operand1)] << stoi(current_instruction.operand2);
-            break;
-        case SRL:
-            registers[register_map.at(current_instruction.operand0)] =
-                registers[register_map.at(current_instruction.operand1)] >> stoi(current_instruction.operand2);
-            break;
-        case MV:
-            registers[register_map.at(current_instruction.operand0)] = registers[register_map.at(current_instruction.operand1)];
-            break;
-        case LI:
-            registers[register_map.at(current_instruction.operand0)] = stoi(current_instruction.operand1);
-            break;
-        case LI_F:
-            fp_registers[fp_register_map.at(current_instruction.operand0)] = stof(current_instruction.operand1);
-            break;
-        case LW:
-            registers[register_map.at(current_instruction.operand0)] = main_memory[registers[register_map.at(current_instruction.operand2)] +
-                                                                                   registers[register_map.at(current_instruction.operand1)]];
-            cycles+=2;
-            break;
-        case LW_F:
-            memcpy(&fp_registers[fp_register_map.at(current_instruction.operand0)], 
-                   &main_memory[registers[register_map.at(current_instruction.operand2)] + registers[register_map.at(current_instruction.operand1)]],
-                   sizeof(float));
-            cycles+=2;
-            break;
-        case LA:
-            registers[register_map.at(current_instruction.operand0)] = var_map.at(current_instruction.operand1);
-            cycles+=2;
-            break;
-        case SW:
-            main_memory[registers[register_map.at(current_instruction.operand2)] +
-                        registers[register_map.at(current_instruction.operand1)]] = registers[register_map.at(current_instruction.operand0)];
-            cycles+=2;
-            break;
-        case SW_F:
-            memcpy(&main_memory[registers[register_map.at(current_instruction.operand2)] + registers[register_map.at(current_instruction.operand1)]],
-                   &fp_registers[fp_register_map.at(current_instruction.operand0)], 
-                   sizeof(float));
-            cycles+=2;
-            break;
-        case NOP:
-            break;
+            // cout << "Fetch unit is " <<  (fetch_units.at(f).is_empty ? "empty" : "full") << endl;
+
+
+            if (!fetch_units.at(f).is_empty)
+            {
+                fetch_units.at(f).passToDecodeUnit(&decode_units.at(d));
+                break;
+            }
+        }
+        decode_units.at(d).decode();
     }
-    cycles+=2;
-    executed_instructions++;
+}
+
+
+// If statements identify the correct operation, and then execute it.
+void Processor::execute_instructions()  
+{
+    for (int e=0; e < EXECUTE_UNITS; e++)  
+    {
+        for (int d=0; d < DECODE_UNITS; d++)  
+        {
+            // cout << "Decode unit is " <<  (decode_units.at(d).is_empty ? "empty" : "full") << endl;
+
+            if (!decode_units.at(d).is_empty)
+            {
+                decode_units.at(d).passToExecuteUnit(&execute_units.at(e));
+                break;
+            }
+        }
+        execute_units.at(e).execute(this);
+    }
+}
+
+void Processor::refresh_pipeline() 
+{
+    fetch_units.at(0).is_empty   = true;
+    decode_units.at(0).is_empty  = true;
+    execute_units.at(0).is_empty = true;
 }
 
 void Processor::debug_processor()  
@@ -359,15 +307,21 @@ void Processor::debug_processor()
         cout << endl;
     }
 
-    cout << "\nMain Memory : \n" << endl;
+    // cout << "\nMain Memory : \n" << endl;
 
-    for (int j = 0; j < 10; j++)  {
-        for (int i = 0; i < 10; i++)  {
-            if (j*10+i < 10)  cout << " ";
-            cout << j * 10 + i << ": " << main_memory[j * 10 + i] << " ";
-        }
-        cout << endl;
-    }
+    // for (int j = 0; j < 10; j++)  {
+    //     for (int i = 0; i < 10; i++)  {
+    //         if (j*10+i < 10)  cout << " ";
+    //         cout << j * 10 + i << ": " << main_memory[j * 10 + i] << " ";
+    //     }
+    //     cout << endl;
+    // }
+
+    cout << endl << endl;
+
+    cout << "Fetch Unit: "   << (fetch_units.at(0).is_empty   ? "Empty"  : fetch_units.at(0).current_instruction.to_string())  << endl;
+    cout << "Decode Unit: "  << (decode_units.at(0).is_empty  ? "Empty"  : decode_units.at(0).current_instruction.to_string())  << endl;
+    cout << "Execute Unit: " << (execute_units.at(0).is_empty ? "Empty"  : execute_units.at(0).current_instruction.to_string()) << endl;
 
     cout << endl << endl;
 }
@@ -408,4 +362,197 @@ void Processor::output_image(char *file_name, const int nx, const int ny, uint32
 
     // Close the file
     fclose(fp);
+}
+
+
+// FETCH UNIT
+Processor::FetchUnit::FetchUnit()  
+{
+    
+}
+
+void Processor::FetchUnit::newInstruction(Processor *processor)  
+{
+    current_instruction = processor->instructions.at(processor->PC);
+    is_empty = false;
+}
+
+void Processor::FetchUnit::fetch()  
+{
+    return;
+}
+
+void Processor::FetchUnit::passToDecodeUnit(Processor::DecodeUnit *decode_unit)  
+{
+    decode_unit->newInstruction(current_instruction);
+}
+
+// DECODE UNIT
+Processor::DecodeUnit::DecodeUnit()  
+{
+    
+}
+
+void Processor::DecodeUnit::newInstruction(Instruction new_instruction)  
+{
+    current_instruction = new_instruction;
+    is_empty = false;
+}
+
+void Processor::DecodeUnit::decode()  
+{
+    if (is_empty)  return;
+    // cout << "Decoding instruction: " << current_instruction.to_string() << endl;
+}
+
+void Processor::DecodeUnit::passToExecuteUnit(Processor::ExecuteUnit *execute_unit)  
+{
+    execute_unit->newInstruction(current_instruction);
+}
+
+// EXECUTE UNIT
+Processor::ExecuteUnit::ExecuteUnit()  
+{
+    
+}
+
+void Processor::ExecuteUnit::newInstruction(Instruction new_instruction)  
+{
+    current_instruction = new_instruction;
+    is_empty = false;
+}
+
+void Processor::ExecuteUnit::execute(Processor *processor)  
+{
+
+    if(is_empty)  return;
+
+    // cout << "Executing instruction: " << current_instruction.to_string() << endl;
+    switch (processor->string_to_op_map[current_instruction.opcode]) {
+        case EXIT:
+            processor->registers[31] = -1;
+            break;
+        case J:
+            processor->registers[31] = processor->PC;
+            processor->PC = processor->fn_map.at(current_instruction.operand0);
+            processor->refresh_pipeline();
+            break;
+        case RETURN:
+            processor->PC = processor->registers[31];
+            break;
+        case BEQ:
+            if (processor->registers[processor->register_map.at(current_instruction.operand0)] ==
+                processor->registers[processor->register_map.at(current_instruction.operand1)])
+                processor->PC += stoi(current_instruction.operand2) - 1;
+            break;
+        case BLT:
+            if (processor->registers[processor->register_map.at(current_instruction.operand0)] <
+                processor->registers[processor->register_map.at(current_instruction.operand1)])
+                processor->PC += stoi(current_instruction.operand2) - 1;
+            break;
+        case ADD:
+            processor->registers[processor->register_map.at(current_instruction.operand0)] =
+                processor->registers[processor->register_map.at(current_instruction.operand1)] + processor->registers[processor->register_map.at(current_instruction.operand2)];
+            break;
+        case ADD_F:
+            processor->fp_registers[processor->fp_register_map.at(current_instruction.operand0)] =
+                processor->fp_registers[processor->fp_register_map.at(current_instruction.operand1)] + processor->fp_registers[processor->fp_register_map.at(current_instruction.operand2)];
+            break;
+        case  ADDI:
+            processor->registers[processor->register_map.at(current_instruction.operand0)] =
+                processor->registers[processor->register_map.at(current_instruction.operand1)] + stoi(current_instruction.operand2);
+            break;
+        case  ADDI_F:
+            processor->fp_registers[processor->fp_register_map.at(current_instruction.operand0)] =
+                processor->fp_registers[processor->fp_register_map.at(current_instruction.operand1)] + stof(current_instruction.operand2);
+            break;
+        case SUB:
+            processor->registers[processor->register_map.at(current_instruction.operand0)] =
+                processor->registers[processor->register_map.at(current_instruction.operand1)] - processor->registers[processor->register_map.at(current_instruction.operand2)];
+            break;
+        case SUBI:
+            processor->registers[processor->register_map.at(current_instruction.operand0)] =
+                processor->registers[processor->register_map.at(current_instruction.operand1)] - stoi(current_instruction.operand2);
+            break;
+        case MUL:
+            processor->registers[processor->register_map.at(current_instruction.operand0)] =
+                processor->registers[processor->register_map.at(current_instruction.operand1)] * processor->registers[processor->register_map.at(current_instruction.operand2)];
+            break;
+        case MULI:
+            processor->registers[processor->register_map.at(current_instruction.operand0)] =
+                processor->registers[processor->register_map.at(current_instruction.operand1)] * stoi(current_instruction.operand2);
+            break;
+        case MULI_F:
+            processor->fp_registers[processor->fp_register_map.at(current_instruction.operand0)] =
+                processor->fp_registers[processor->fp_register_map.at(current_instruction.operand1)] * stof(current_instruction.operand2);
+            break;
+        case DIVI:
+            processor->registers[processor->register_map.at(current_instruction.operand0)] =
+                processor->registers[processor->register_map.at(current_instruction.operand1)] / stoi(current_instruction.operand2);
+            break;
+        case DIVI_F:
+            processor->fp_registers[processor->fp_register_map.at(current_instruction.operand0)] =
+                processor->fp_registers[processor->fp_register_map.at(current_instruction.operand1)] / stof(current_instruction.operand2);
+            break;
+        case AND:
+            processor->registers[processor->register_map.at(current_instruction.operand0)] =
+                processor->registers[processor->register_map.at(current_instruction.operand1)] & processor->registers[processor->register_map.at(current_instruction.operand2)];
+            break;
+        case OR:
+            processor->registers[processor->register_map.at(current_instruction.operand0)] =
+                processor->registers[processor->register_map.at(current_instruction.operand1)] | processor->registers[processor->register_map.at(current_instruction.operand2)];
+            break;
+        case SLL:
+            processor->registers[processor->register_map.at(current_instruction.operand0)] =
+                processor->registers[processor->register_map.at(current_instruction.operand1)] << stoi(current_instruction.operand2);
+            break;
+        case SRL:
+            processor->registers[processor->register_map.at(current_instruction.operand0)] =
+                processor->registers[processor->register_map.at(current_instruction.operand1)] >> stoi(current_instruction.operand2);
+            break;
+        case MV:
+            processor->registers[processor->register_map.at(current_instruction.operand0)] = processor->registers[processor->register_map.at(current_instruction.operand1)];
+            break;
+        case LI:
+            processor->registers[processor->register_map.at(current_instruction.operand0)] = stoi(current_instruction.operand1);
+            break;
+        case LI_F:
+            processor->fp_registers[processor->fp_register_map.at(current_instruction.operand0)] = stof(current_instruction.operand1);
+            break;
+        case LW:
+            processor->registers[processor->register_map.at(current_instruction.operand0)] = processor->main_memory[processor->registers[processor->register_map.at(current_instruction.operand2)] +
+                                                                                   processor->registers[processor->register_map.at(current_instruction.operand1)]];
+            // cycles+=2;
+            break;
+        case LW_F:
+            memcpy(&processor->fp_registers[processor->fp_register_map.at(current_instruction.operand0)], 
+                   &(processor->main_memory)[processor->registers[processor->register_map.at(current_instruction.operand2)] + processor->registers[processor->register_map.at(current_instruction.operand1)]],
+                   sizeof(float));
+            // cycles+=2;
+            break;
+        case LA:
+            processor->registers[processor->register_map.at(current_instruction.operand0)] = processor->var_map.at(current_instruction.operand1);
+            // cycles+=2;
+            break;
+        case SW:
+            processor->main_memory[processor->registers[processor->register_map.at(current_instruction.operand2)] +
+                        processor->registers[processor->register_map.at(current_instruction.operand1)]] = processor->registers[processor->register_map.at(current_instruction.operand0)];
+            // cycles+=2;
+            break;
+        case SW_F:
+            memcpy(&(processor->main_memory)[processor->registers[processor->register_map.at(current_instruction.operand2)] + processor->registers[processor->register_map.at(current_instruction.operand1)]],
+                   &processor->fp_registers[processor->fp_register_map.at(current_instruction.operand0)], 
+                   sizeof(float));
+            // cycles+=2;
+            break;
+        case NOP:
+            break;
+    }
+    completeInstruction(processor);
+}
+
+void Processor::ExecuteUnit::completeInstruction(Processor *processor)  
+{
+    // is_empty = true;
+    processor->executed_instructions++;
 }

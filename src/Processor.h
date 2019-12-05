@@ -8,10 +8,15 @@
 #include <iomanip>
 
 #include "Instruction.h"
+// #include "ExecuteUnit.h"
 
 // #define DEBUG 0
 // #define PRINT_STATS 0
 // #define PRINT_MEM_TO_BITMAP
+
+#define FETCH_UNITS 1
+#define DECODE_UNITS 1
+#define EXECUTE_UNITS 1
 
 using namespace std;
 
@@ -23,7 +28,19 @@ private:
     int cycles = 0;
     int executed_instructions = 0;
     int free_mem_pointer = 0;
+    Instruction nop_instruction;
 
+    class ExecuteUnit;
+    class DecodeUnit;
+    class FetchUnit;
+
+
+
+    
+
+    vector<FetchUnit> fetch_units;
+    vector<DecodeUnit> decode_units;
+    vector<ExecuteUnit> execute_units;
     vector<Instruction> instructions;
     map<string, int> fn_map;
     map<string, uint32_t> var_map;
@@ -138,9 +155,13 @@ private:
     float fp_registers[32]    = { {0} };
     
     // void create_fn_map();
-    Instruction fetch_instruction();
-    void decode_and_execute_instruction(Instruction current_instruction);
+    void fetch_instructions();
+    void decode_instructions();
+    void execute_instructions();
+    void refresh_pipeline();
     void debug_processor();
+
+   
 
 public:
     Processor();
@@ -156,6 +177,44 @@ public:
     void run_program();
 
     void output_image(char *filename, const int nx, const int ny, uint32_t* image);
+
+    
 };
 
 
+class Processor::ExecuteUnit
+{
+private:
+public:
+    ExecuteUnit();
+    Instruction current_instruction;
+    void newInstruction(Instruction new_instruction);
+    void execute(Processor *processor);
+    void completeInstruction(Processor *processor);
+    bool is_empty = true;
+};
+
+class Processor::DecodeUnit
+{
+private:
+public:
+    DecodeUnit();
+    Instruction current_instruction;
+    void newInstruction(Instruction new_instruction);
+    void decode();
+    void passToExecuteUnit(Processor::ExecuteUnit *executeUnit);
+    bool is_empty = true;
+};
+
+class Processor::FetchUnit
+{
+private:
+public:
+    FetchUnit();
+    Instruction current_instruction;
+    void newInstruction(Processor *processor);
+    void fetch();
+    void passToDecodeUnit(Processor::DecodeUnit *decodeUnit);
+    bool is_empty = true;
+};
+    

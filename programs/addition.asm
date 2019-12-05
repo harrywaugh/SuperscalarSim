@@ -12,4 +12,3 @@ main:
 	sw $t4, $zero($t5)
 	mv $s0, $t4
 	exit
-	
