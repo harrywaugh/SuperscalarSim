@@ -3,6 +3,7 @@
 #include <sstream>
 #include <vector>
 #include <map>
+#include <queue>
 #include <chrono>
 #include <ctime>
 #include <iomanip>
@@ -28,6 +29,8 @@ private:
     int cycles = 0;
     int executed_instructions = 0;
     int free_mem_pointer = 0;
+    bool refresh_flag = false;
+
     Instruction nop_instruction;
 
     class ExecuteUnit;
@@ -42,7 +45,9 @@ private:
     vector<DecodeUnit> decode_units;
     vector<ExecuteUnit> execute_units;
     vector<Instruction> instructions;
+    queue<int> branch_record;
     map<string, int> fn_map;
+    map<int, string> fn_map_reverse;
     map<string, uint32_t> var_map;
     map<std::string, int> register_map = {
         {"$zero", 0},
@@ -213,7 +218,7 @@ public:
     FetchUnit();
     Instruction current_instruction;
     void newInstruction(Processor *processor);
-    void fetch();
+    void fetch(Processor *processor);
     void passToDecodeUnit(Processor::DecodeUnit *decodeUnit);
     bool is_empty = true;
 };

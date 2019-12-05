@@ -10,7 +10,7 @@ debug: src/main.cpp
 
 tests: clean simulator
 	@echo "Running tests...\n"
-	@python3 src/run_tests.py
+	@python src/run_tests.py
 
 clean:
 	@echo "Cleaning up..."

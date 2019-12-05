@@ -47,7 +47,6 @@ std::string int_to_hex( T i )
 // Increment the program counter
 void Processor::incrementPC()  
 {
-    if (PC >= instructions.size()-1)  return;
     PC++;
 }
 
@@ -80,6 +79,7 @@ void Processor::addFunction(string line)
     // Store name, and then add <function name, pointer to first instruction> to the map
     fn_name = line.substr(start_index, current_index - start_index);
     fn_map.insert(pair<string, int>(fn_name, instructions.size()));
+    fn_map_reverse.insert(pair<int, string>(instructions.size(), fn_name));
 }
 
 /// Function takes in string and parses variable
@@ -166,17 +166,21 @@ void Processor::run_program()
         getchar();
 #endif
 
-        printf("Cycle %d\n", cycles);
-
 
         execute_instructions();
-        decode_instructions();
-        fetch_instructions();
+        if (!refresh_flag)  
+        {
+            decode_instructions();
+            fetch_instructions();
+
+            incrementPC();
+        }
+
+        refresh_flag = false;
 
         incrementCycles();
 
         //Increment program counter
-        incrementPC();
         
     }
 
@@ -196,11 +200,11 @@ void Processor::run_program()
     
 
 #ifdef PRINT_STATS
-    cout << "Time Elapsed: " << elapsed_seconds.count() << endl;
-    cout << "Executed Instructions = " << executed_instructions << endl;
-    cout << "Total Cycles = " << cycles << endl;
-    cout << "Instructions per Cycle = " << (float)(executed_instructions) / (float)(cycles) << endl;
-    cout << "Instructions per Second = " << (float)(executed_instructions) / (float)(elapsed_seconds.count()) << endl;
+    printf("Time Elapsed: %.2f\n", elapsed_seconds.count());
+    printf("Executed Instructions = %.2f\n", executed_instructions);
+    printf("Total Cycles = %.d\n\n", cycles);
+    printf("Instructions per Cycle = %.2f\n", (float)(executed_instructions) / (float)(cycles));
+    printf("Instructions per Second = %.2f\n", (float)(executed_instructions) / (float)(elapsed_seconds.count()));
 #endif
 
     cout << registers[16];
@@ -213,7 +217,7 @@ void Processor::fetch_instructions()  {
     for (int f=0; f < FETCH_UNITS; f++)  
     {
         fetch_units.at(f).newInstruction(this);
-        fetch_units.at(f).fetch();
+        fetch_units.at(f).fetch(this);
     }
 }
 
@@ -259,9 +263,13 @@ void Processor::execute_instructions()
 
 void Processor::refresh_pipeline() 
 {
+    fetch_units.at(0).current_instruction   = nop_instruction;
+    decode_units.at(0).current_instruction  = nop_instruction;
+    execute_units.at(0).current_instruction = nop_instruction;
     fetch_units.at(0).is_empty   = true;
     decode_units.at(0).is_empty  = true;
     execute_units.at(0).is_empty = true;
+    refresh_flag = true;
 }
 
 void Processor::debug_processor()  
@@ -290,6 +298,8 @@ void Processor::debug_processor()
     cout << "\nInstructions : \n" << endl;
 
     for (int i = 0; i < instructions.size(); i++)  {
+        if(fn_map_reverse.count(i) > 0)  
+            cout << fn_map_reverse.at(i) << ":" << endl;
         cout << "\t";
         cout << i << ". " << instructions.at(i).to_string(); 
         if (i == PC)
@@ -319,9 +329,9 @@ void Processor::debug_processor()
 
     cout << endl << endl;
 
-    cout << "Fetch Unit: "   << (fetch_units.at(0).is_empty   ? "Empty"  : fetch_units.at(0).current_instruction.to_string())  << endl;
-    cout << "Decode Unit: "  << (decode_units.at(0).is_empty  ? "Empty"  : decode_units.at(0).current_instruction.to_string())  << endl;
-    cout << "Execute Unit: " << (execute_units.at(0).is_empty ? "Empty"  : execute_units.at(0).current_instruction.to_string()) << endl;
+    cout << "Fetch Unit: "   << (PC < instructions.size() ? instructions.at(PC).to_string() : "nop" ) << endl;
+    cout << "Decode Unit: "  << (fetch_units.at(0).is_empty  ? "Empty"  : fetch_units.at(0).current_instruction.to_string())  << endl;
+    cout << "Execute Unit: " << (decode_units.at(0).is_empty ? "Empty"  : decode_units.at(0).current_instruction.to_string()) << endl;
 
     cout << endl << endl;
 }
@@ -373,12 +383,34 @@ Processor::FetchUnit::FetchUnit()
 
 void Processor::FetchUnit::newInstruction(Processor *processor)  
 {
-    current_instruction = processor->instructions.at(processor->PC);
+    if (processor->PC >= processor->instructions.size())  
+        current_instruction = processor->nop_instruction;
+    else
+        current_instruction = processor->instructions.at(processor->PC);
     is_empty = false;
 }
 
-void Processor::FetchUnit::fetch()  
+void Processor::FetchUnit::fetch(Processor *processor)
 {
+    switch (processor->string_to_op_map[current_instruction.opcode]) {
+        case J:
+            processor->registers[31] = processor->PC;
+            processor->PC = processor->fn_map.at(current_instruction.operand0)-1;
+            break;
+        case RETURN:
+            processor->PC = processor->registers[31]-1;
+            break;
+        case BEQ:
+            processor->branch_record.push(processor->PC);
+            processor->PC += stoi(current_instruction.operand2)-1;
+            break;
+        case BLT:
+            processor->branch_record.push(processor->PC);
+            processor->PC += stoi(current_instruction.operand2)-1;
+            break;
+        default:
+            break;
+    }
     return;
 }
 
@@ -432,25 +464,35 @@ void Processor::ExecuteUnit::execute(Processor *processor)
         case EXIT:
             processor->registers[31] = -1;
             break;
-        case J:
-            processor->registers[31] = processor->PC;
-            processor->PC = processor->fn_map.at(current_instruction.operand0);
-            processor->refresh_pipeline();
-            break;
-        case RETURN:
-            processor->PC = processor->registers[31];
-            break;
+        // case J:
+        //     processor->registers[31] = processor->PC;
+        //     processor->PC = processor->fn_map.at(current_instruction.operand0);
+        //     processor->refresh_pipeline();
+        //     break;
+        // case RETURN:
+        //     processor->PC = processor->registers[31];
+        //     processor->refresh_pipeline();
+        //     break;
         case BEQ:
-            if (processor->registers[processor->register_map.at(current_instruction.operand0)] ==
+            if (processor->registers[processor->register_map.at(current_instruction.operand0)] !=
                 processor->registers[processor->register_map.at(current_instruction.operand1)])
-                processor->PC += stoi(current_instruction.operand2) - 1;
+                {
+                    processor->PC = processor->branch_record.front() + 1;
+                    processor->branch_record.pop();
+                    processor->refresh_pipeline();
+                }
+
             break;
         case BLT:
-            if (processor->registers[processor->register_map.at(current_instruction.operand0)] <
+            if (processor->registers[processor->register_map.at(current_instruction.operand0)] >
                 processor->registers[processor->register_map.at(current_instruction.operand1)])
-                processor->PC += stoi(current_instruction.operand2) - 1;
+                {
+                    processor->PC = processor->branch_record.front() + 1;
+                    processor->branch_record.pop();
+                    processor->refresh_pipeline();
+                }
             break;
-        case ADD:
+        case ADD:   
             processor->registers[processor->register_map.at(current_instruction.operand0)] =
                 processor->registers[processor->register_map.at(current_instruction.operand1)] + processor->registers[processor->register_map.at(current_instruction.operand2)];
             break;
@@ -546,6 +588,8 @@ void Processor::ExecuteUnit::execute(Processor *processor)
             // cycles+=2;
             break;
         case NOP:
+            break;
+        default:
             break;
     }
     completeInstruction(processor);
