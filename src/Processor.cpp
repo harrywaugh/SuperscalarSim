@@ -102,7 +102,7 @@ void Processor::addVariable(string line)
 
     // Put value in memory, and store <label, pointer to mem> in HashMap
     main_memory[free_mem_pointer] = value;
-    var_map.insert(pair<string, uint32_t>(var_name, free_mem_pointer++));
+    var_map.insert(pair<string, int>(var_name, free_mem_pointer++));
 }
 
 void Processor::addArray(string line)  
@@ -125,7 +125,7 @@ void Processor::addArray(string line)
     length = stoi(line.substr(start_index, current_index - start_index));
 
     // Split string around white space and store array values
-    uint32_t *arr_pointer = &main_memory[free_mem_pointer];
+    int *arr_pointer = &main_memory[free_mem_pointer];
     for (int i = 0; i < length; i++)
     {
         current_index++;
@@ -142,7 +142,7 @@ void Processor::addArray(string line)
             main_memory[free_mem_pointer++] = stoi(line.substr(start_index, current_index - start_index));
         }
     }
-    var_map.insert(pair<string, uint32_t>(arr_name, free_mem_pointer - length));
+    var_map.insert(pair<string, int>(arr_name, free_mem_pointer - length));
 }
 
 // Simulate the program on the processor
@@ -290,14 +290,14 @@ void Processor::debug_processor()
 
     cout << "\nArrays and Variables : \n" << endl;
 
-    for (it1 = var_map.begin(); it1 != var_map.end(); it1++)
+    for (it = var_map.begin(); it != var_map.end(); it++)
     {
-        cout << it1->first << " -> &Mem + " << it1->second <<  endl;
+        cout << it->first << " -> &Mem + " << it->second <<  endl;
     }
 
     cout << "\nInstructions : \n" << endl;
 
-    for (int i = 0; i < instructions.size(); i++)  {
+    for (int i = max(PC - 5, 0); i < min(PC+5, (int)instructions.size()); i++)  {
         if(fn_map_reverse.count(i) > 0)  
             cout << fn_map_reverse.at(i) << ":" << endl;
         cout << "\t";
@@ -313,6 +313,15 @@ void Processor::debug_processor()
         for (int i = 0; i < 8; i++)  {
             if (j*8+i < 10)  cout << " ";
             cout << j*8+i << ": " << registers[j*8+i] << " ";
+        }
+        cout << endl;
+    }
+
+    cout << "\nFP Register Values : \n" << endl;
+    for (int j = 0; j < 4; j++)  {
+        for (int i = 0; i < 8; i++)  {
+            if (j*8+i < 10)  cout << " ";
+            cout << j*8+i << ": " << fp_registers[j*8+i] << " ";
         }
         cout << endl;
     }
@@ -337,7 +346,7 @@ void Processor::debug_processor()
 }
 
 // Routine to output the image in Netpbm grayscale binary image format
-void Processor::output_image(char *file_name, const int nx, const int ny, uint32_t* image)
+void Processor::output_image(char *file_name, const int nx, const int ny, int* image)
 {
     // Open output file
     FILE* fp = fopen(file_name, "w");
@@ -394,18 +403,26 @@ void Processor::FetchUnit::fetch(Processor *processor)
 {
     switch (processor->string_to_op_map[current_instruction.opcode]) {
         case J:
-            processor->registers[31] = processor->PC;
+            // processor->registers[31] = processor->PC;
+            processor->return_address_stack.push(processor->PC);
+            // cout << "Store RA: " << processor->PC << endl;
             processor->PC = processor->fn_map.at(current_instruction.operand0)-1;
+            
+
             break;
         case RETURN:
-            processor->PC = processor->registers[31]-1;
+            // cout << "Bouncing back to " << processor->registers[31] << endl;
+            processor->PC = processor->return_address_stack.top();
+            processor->return_address_stack.pop();
             break;
         case BEQ:
             processor->branch_record.push(processor->PC);
+            // printf("Pushing %d to Branch Record\n", processor->PC);
             processor->PC += stoi(current_instruction.operand2)-1;
             break;
         case BLT:
             processor->branch_record.push(processor->PC);
+            // printf("Pushing %d to Branch Record\n", processor->PC);
             processor->PC += stoi(current_instruction.operand2)-1;
             break;
         default:
@@ -476,21 +493,35 @@ void Processor::ExecuteUnit::execute(Processor *processor)
         case BEQ:
             if (processor->registers[processor->register_map.at(current_instruction.operand0)] !=
                 processor->registers[processor->register_map.at(current_instruction.operand1)])
-                {
-                    processor->PC = processor->branch_record.front() + 1;
+            {
+                processor->PC = processor->branch_record.front() + 1;
+                processor->refresh_pipeline();
+                while (!processor->branch_record.empty())
                     processor->branch_record.pop();
-                    processor->refresh_pipeline();
-                }
-
+                // printf("Clearing Branch Record\n");
+                
+            }
+            else
+            {
+                // printf("Popping %d from Branch Record\n", processor->branch_record.front());
+                processor->branch_record.pop();
+            }
             break;
         case BLT:
-            if (processor->registers[processor->register_map.at(current_instruction.operand0)] >
+            if (processor->registers[processor->register_map.at(current_instruction.operand0)] >=
                 processor->registers[processor->register_map.at(current_instruction.operand1)])
-                {
-                    processor->PC = processor->branch_record.front() + 1;
+            {
+                processor->PC = processor->branch_record.front() + 1;
+                processor->refresh_pipeline();
+                while (!processor->branch_record.empty())
                     processor->branch_record.pop();
-                    processor->refresh_pipeline();
-                }
+                // printf("Clearing Branch Record\n");
+            }
+            else
+            {
+                // printf("Popping %d from Branch Record\n", processor->branch_record.front());
+                processor->branch_record.pop();
+            }
             break;
         case ADD:   
             processor->registers[processor->register_map.at(current_instruction.operand0)] =

@@ -4,6 +4,7 @@
 #include <vector>
 #include <map>
 #include <queue>
+#include <stack>
 #include <chrono>
 #include <ctime>
 #include <iomanip>
@@ -29,6 +30,7 @@ private:
     int cycles = 0;
     int executed_instructions = 0;
     int free_mem_pointer = 0;
+    int speculative_jumps = 0;
     bool refresh_flag = false;
 
     Instruction nop_instruction;
@@ -39,6 +41,7 @@ private:
 
 
 
+
     
 
     vector<FetchUnit> fetch_units;
@@ -46,9 +49,10 @@ private:
     vector<ExecuteUnit> execute_units;
     vector<Instruction> instructions;
     queue<int> branch_record;
+    stack<int> return_address_stack;
     map<string, int> fn_map;
     map<int, string> fn_map_reverse;
-    map<string, uint32_t> var_map;
+    map<string, int> var_map;
     map<std::string, int> register_map = {
         {"$zero", 0},
         {"$v0", 2}, {"$v1", 3},
@@ -155,8 +159,8 @@ private:
         {"sw.f", SW_F},
         {"nop", NOP}};
 
-    uint32_t main_memory[1024] = {0};
-    uint32_t registers[32]       = { {0} };
+    int main_memory[1024] = {0};
+    int registers[32]       = { {0} };
     float fp_registers[32]    = { {0} };
     
     // void create_fn_map();
@@ -181,7 +185,7 @@ public:
 
     void run_program();
 
-    void output_image(char *filename, const int nx, const int ny, uint32_t* image);
+    void output_image(char *filename, const int nx, const int ny, int* image);
 
     
 };
