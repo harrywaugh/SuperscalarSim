@@ -167,21 +167,46 @@ void Processor::run_program()
 #endif
 
 
+#if PIPELINED==1
         execute_instructions();
         if (!refresh_flag)  
         {
             decode_instructions();
             fetch_instructions();
-
             incrementPC();
         }
-
+        incrementCycles();
         refresh_flag = false;
-
+#else
+        fetch_instructions();
         incrementCycles();
 
-        //Increment program counter
-        
+#ifdef DEBUG
+        debug_processor();
+        getchar();
+#endif
+
+        decode_instructions();
+        incrementCycles();
+
+#ifdef DEBUG
+        debug_processor();
+        getchar();
+#endif
+
+        execute_instructions();
+        incrementCycles();
+        incrementPC();
+
+#ifdef DEBUG
+        debug_processor();
+        getchar();
+#endif
+#if PIPELINED==0
+        execute_units.at(0).is_empty = true;
+#endif
+
+#endif
     }
 
     // Some computation here
@@ -337,11 +362,15 @@ void Processor::debug_processor()
     // }
 
     cout << endl << endl;
-
+#if PIPELINED==1
     cout << "Fetch Unit: "   << (PC < instructions.size() ? instructions.at(PC).to_string() : "nop" ) << endl;
     cout << "Decode Unit: "  << (fetch_units.at(0).is_empty  ? "Empty"  : fetch_units.at(0).current_instruction.to_string())  << endl;
     cout << "Execute Unit: " << (decode_units.at(0).is_empty ? "Empty"  : decode_units.at(0).current_instruction.to_string()) << endl;
-
+#else
+    cout << "Fetch Unit: "   << (fetch_units.at(0).is_empty ? "Empty"    : fetch_units.at(0).current_instruction.to_string() ) << endl;
+    cout << "Decode Unit: "  << (decode_units.at(0).is_empty  ? "Empty"  : decode_units.at(0).current_instruction.to_string())  << endl;
+    cout << "Execute Unit: " << (execute_units.at(0).is_empty ? "Empty"  : execute_units.at(0).current_instruction.to_string()) << endl;
+#endif
     cout << endl << endl;
 }
 
@@ -407,7 +436,9 @@ void Processor::FetchUnit::fetch(Processor *processor)
             processor->return_address_stack.push(processor->PC);
             // cout << "Store RA: " << processor->PC << endl;
             processor->PC = processor->fn_map.at(current_instruction.operand0)-1;
-            
+#if PIPELINED==0
+            // processor->PC += 1;
+#endif
 
             break;
         case RETURN:
@@ -416,11 +447,13 @@ void Processor::FetchUnit::fetch(Processor *processor)
             processor->return_address_stack.pop();
             break;
         case BEQ:
+            if (PIPELINED==0) return;
             processor->branch_record.push(processor->PC);
             // printf("Pushing %d to Branch Record\n", processor->PC);
             processor->PC += stoi(current_instruction.operand2)-1;
             break;
         case BLT:
+            if (PIPELINED==0) return;
             processor->branch_record.push(processor->PC);
             // printf("Pushing %d to Branch Record\n", processor->PC);
             processor->PC += stoi(current_instruction.operand2)-1;
@@ -434,6 +467,9 @@ void Processor::FetchUnit::fetch(Processor *processor)
 void Processor::FetchUnit::passToDecodeUnit(Processor::DecodeUnit *decode_unit)  
 {
     decode_unit->newInstruction(current_instruction);
+#if PIPELINED==0
+    is_empty = true;
+#endif
 }
 
 // DECODE UNIT
@@ -457,6 +493,9 @@ void Processor::DecodeUnit::decode()
 void Processor::DecodeUnit::passToExecuteUnit(Processor::ExecuteUnit *execute_unit)  
 {
     execute_unit->newInstruction(current_instruction);
+#if PIPELINED==0
+    is_empty = true;
+#endif
 }
 
 // EXECUTE UNIT
@@ -491,36 +530,58 @@ void Processor::ExecuteUnit::execute(Processor *processor)
         //     processor->refresh_pipeline();
         //     break;
         case BEQ:
-            if (processor->registers[processor->register_map.at(current_instruction.operand0)] !=
-                processor->registers[processor->register_map.at(current_instruction.operand1)])
+            if (PIPELINED==0)
             {
-                processor->PC = processor->branch_record.front() + 1;
-                processor->refresh_pipeline();
-                while (!processor->branch_record.empty())
-                    processor->branch_record.pop();
-                // printf("Clearing Branch Record\n");
-                
+                if (processor->registers[processor->register_map.at(current_instruction.operand0)] ==
+                    processor->registers[processor->register_map.at(current_instruction.operand1)])
+                {
+                    processor->PC += stoi(current_instruction.operand2)-1;
+                }
             }
             else
             {
-                // printf("Popping %d from Branch Record\n", processor->branch_record.front());
-                processor->branch_record.pop();
+                if (processor->registers[processor->register_map.at(current_instruction.operand0)] !=
+                    processor->registers[processor->register_map.at(current_instruction.operand1)])
+                {
+                    processor->PC = processor->branch_record.front() + 1;
+                    processor->refresh_pipeline();
+                    while (!processor->branch_record.empty())
+                        processor->branch_record.pop();
+                    // printf("Clearing Branch Record\n");
+                    
+                }
+                else
+                {
+                    // printf("Popping %d from Branch Record\n", processor->branch_record.front());
+                    processor->branch_record.pop();
+                }
             }
             break;
         case BLT:
-            if (processor->registers[processor->register_map.at(current_instruction.operand0)] >=
-                processor->registers[processor->register_map.at(current_instruction.operand1)])
+            if (PIPELINED==0)
             {
-                processor->PC = processor->branch_record.front() + 1;
-                processor->refresh_pipeline();
-                while (!processor->branch_record.empty())
-                    processor->branch_record.pop();
-                // printf("Clearing Branch Record\n");
+                if (processor->registers[processor->register_map.at(current_instruction.operand0)] <
+                    processor->registers[processor->register_map.at(current_instruction.operand1)])
+                {
+                    processor->PC += stoi(current_instruction.operand2)-1;
+                }
             }
             else
             {
-                // printf("Popping %d from Branch Record\n", processor->branch_record.front());
-                processor->branch_record.pop();
+                if (processor->registers[processor->register_map.at(current_instruction.operand0)] >=
+                    processor->registers[processor->register_map.at(current_instruction.operand1)])
+                {
+                    processor->PC = processor->branch_record.front() + 1;
+                    processor->refresh_pipeline();
+                    while (!processor->branch_record.empty())
+                        processor->branch_record.pop();
+                    // printf("Clearing Branch Record\n");
+                }
+                else
+                {
+                    // printf("Popping %d from Branch Record\n", processor->branch_record.front());
+                    processor->branch_record.pop();
+                }
             }
             break;
         case ADD:   
@@ -628,6 +689,5 @@ void Processor::ExecuteUnit::execute(Processor *processor)
 
 void Processor::ExecuteUnit::completeInstruction(Processor *processor)  
 {
-    // is_empty = true;
     processor->executed_instructions++;
 }

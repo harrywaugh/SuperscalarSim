@@ -20,6 +20,8 @@
 #define DECODE_UNITS 1
 #define EXECUTE_UNITS 1
 
+// #define PIPELINED 1
+
 using namespace std;
 
 

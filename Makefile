@@ -2,15 +2,19 @@ CC=g++
 
 simulator: src/main.cpp
 	@echo "Compiling simulator..."
-	${CC} -std=c++11 src/*.cpp -o simulator.exe $(VARS)
+	${CC} -std=c++11 src/*.cpp -o simulator.exe -DPIPELINED=1 $(VARS)
 
 stats: src/main.cpp
 	@echo "Compiling simulator..."
-	${CC} -std=c++11 src/*.cpp -o simulator.exe -DPRINT_STATS=1
+	${CC} -std=c++11 src/*.cpp -o simulator.exe -DPRINT_STATS=1 -DPIPELINED=1
+
+non-pipelined-stats: src/main.cpp
+	@echo "Compiling simulator..."
+	${CC} -std=c++11 src/*.cpp -o simulator.exe -DPRINT_STATS=1 -DPIPELINED=0
 
 debug: src/main.cpp
 	@echo "Compiling simulator..."
-	${CC} -std=c++11 src/*.cpp -o simulator.exe -DDEBUG=1 -DPRINT_STATS=1
+	${CC} -std=c++11 src/*.cpp -o simulator.exe -DDEBUG=1 -DPRINT_STATS=1 -DPIPELINED=1 $(VARS)
 
 tests: clean simulator
 	@echo "Running tests...\n"
