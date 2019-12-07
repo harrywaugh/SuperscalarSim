@@ -167,7 +167,7 @@ void Processor::run_program()
         
 
 
-        #if PIPELINED==1
+        #ifdef PIPELINED
 
 
             update_instructions();

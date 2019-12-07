@@ -26,11 +26,3 @@ void Processor::DecodeUnit::decode()
 {
     if (is_empty)  return;
 }
-
-// void Processor::DecodeUnit::passToExecuteUnit(Processor::ExecuteUnit *execute_unit)  
-// {
-//     execute_unit->update_next_instruction(current_instruction);
-//     #if PIPELINED==0
-//         is_empty = true;
-//     #endif
-// }

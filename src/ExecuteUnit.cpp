@@ -31,16 +31,13 @@ void Processor::ExecuteUnit::execute(Processor *processor)
             processor->registers[31] = -1;
             break;
         case BEQ:
-            if (PIPELINED==0)
-            {
+            #ifdef PIPELINED
                 if (processor->registers[processor->register_map.at(current_instruction.operand0)] ==
                     processor->registers[processor->register_map.at(current_instruction.operand1)])
                 {
                     processor->PC += stoi(current_instruction.operand2)-1;
                 }
-            }
-            else
-            {
+            #else
                 if (processor->registers[processor->register_map.at(current_instruction.operand0)] !=
                     processor->registers[processor->register_map.at(current_instruction.operand1)])
                 {
@@ -53,19 +50,16 @@ void Processor::ExecuteUnit::execute(Processor *processor)
                 {
                     processor->branch_record.pop();
                 }
-            }
+            #endif
             break;
         case BLT:
-            if (PIPELINED==0)
-            {
+            #ifdef PIPELINED
                 if (processor->registers[processor->register_map.at(current_instruction.operand0)] <
                     processor->registers[processor->register_map.at(current_instruction.operand1)])
                 {
                     processor->PC += stoi(current_instruction.operand2)-1;
                 }
-            }
-            else
-            {
+            #else
                 if (processor->registers[processor->register_map.at(current_instruction.operand0)] >=
                     processor->registers[processor->register_map.at(current_instruction.operand1)])
                 {
@@ -78,7 +72,7 @@ void Processor::ExecuteUnit::execute(Processor *processor)
                 {
                     processor->branch_record.pop();
                 }
-            }
+            #endif
             break;
         case ADD:   
             processor->registers[processor->register_map.at(current_instruction.operand0)] =

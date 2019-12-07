@@ -15,12 +15,12 @@
 // #define DEBUG 0
 // #define PRINT_STATS 0
 // #define PRINT_MEM_TO_BITMAP
+// #define PIPELINED 1
 
 #define FETCH_UNITS 1
 #define DECODE_UNITS 1
 #define EXECUTE_UNITS 1
 
-// #define PIPELINED 1
 
 using namespace std;
 

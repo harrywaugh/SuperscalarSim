@@ -33,12 +33,16 @@ void Processor::FetchUnit::fetch(Processor *processor)
             processor->return_address_stack.pop();
             break;
         case BEQ:
-            if (PIPELINED==0) return;
+            #ifdef PIPELINED 
+                return
+            #endif
             processor->branch_record.push(processor->PC);
             processor->PC += stoi(current_instruction.operand2)-1;
             break;
         case BLT:
-            if (PIPELINED==0) return;
+            #ifdef PIPELINED 
+                return
+            #endif
             processor->branch_record.push(processor->PC);
             processor->PC += stoi(current_instruction.operand2)-1;
             break;
@@ -47,11 +51,3 @@ void Processor::FetchUnit::fetch(Processor *processor)
     }
     return;
 }
-
-// void Processor::FetchUnit::passToDecodeUnit(Processor::DecodeUnit *decode_unit)  
-// {
-//     decode_unit->update_next_instruction(current_instruction);
-// #if PIPELINED==0
-//     is_empty = true;
-// #endif
-// }
