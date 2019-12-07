@@ -1,3 +1,4 @@
+#include "DecodeUnit.h"
 #include "ExecuteUnit.h"
 
 // EXECUTE UNIT
@@ -6,31 +7,29 @@ Processor::ExecuteUnit::ExecuteUnit()
     
 }
 
-void Processor::ExecuteUnit::newInstruction(Instruction new_instruction)  
+void Processor::ExecuteUnit::update_next_instruction(DecodeUnit &decode_unit)  
 {
-    current_instruction = new_instruction;
+    next_instruction = decode_unit.current_instruction;
     is_empty = false;
 }
+
+void Processor::ExecuteUnit::update_current_instruction()  
+{
+    current_instruction = next_instruction;
+    if (current_instruction.opcode == "")
+        is_empty = true;
+}
+
 
 void Processor::ExecuteUnit::execute(Processor *processor)  
 {
 
     if(is_empty)  return;
 
-    // cout << "Executing instruction: " << current_instruction.to_string() << endl;
     switch (processor->string_to_op_map[current_instruction.opcode]) {
         case EXIT:
             processor->registers[31] = -1;
             break;
-        // case J:
-        //     processor->registers[31] = processor->PC;
-        //     processor->PC = processor->fn_map.at(current_instruction.operand0);
-        //     processor->refresh_pipeline();
-        //     break;
-        // case RETURN:
-        //     processor->PC = processor->registers[31];
-        //     processor->refresh_pipeline();
-        //     break;
         case BEQ:
             if (PIPELINED==0)
             {
@@ -49,12 +48,9 @@ void Processor::ExecuteUnit::execute(Processor *processor)
                     processor->refresh_pipeline();
                     while (!processor->branch_record.empty())
                         processor->branch_record.pop();
-                    // printf("Clearing Branch Record\n");
-                    
                 }
                 else
                 {
-                    // printf("Popping %d from Branch Record\n", processor->branch_record.front());
                     processor->branch_record.pop();
                 }
             }
@@ -77,11 +73,9 @@ void Processor::ExecuteUnit::execute(Processor *processor)
                     processor->refresh_pipeline();
                     while (!processor->branch_record.empty())
                         processor->branch_record.pop();
-                    // printf("Clearing Branch Record\n");
                 }
                 else
                 {
-                    // printf("Popping %d from Branch Record\n", processor->branch_record.front());
                     processor->branch_record.pop();
                 }
             }
@@ -158,28 +152,23 @@ void Processor::ExecuteUnit::execute(Processor *processor)
         case LW:
             processor->registers[processor->register_map.at(current_instruction.operand0)] = processor->main_memory[processor->registers[processor->register_map.at(current_instruction.operand2)] +
                                                                                    processor->registers[processor->register_map.at(current_instruction.operand1)]];
-            // cycles+=2;
             break;
         case LW_F:
             memcpy(&processor->fp_registers[processor->fp_register_map.at(current_instruction.operand0)], 
                    &(processor->main_memory)[processor->registers[processor->register_map.at(current_instruction.operand2)] + processor->registers[processor->register_map.at(current_instruction.operand1)]],
                    sizeof(float));
-            // cycles+=2;
             break;
         case LA:
             processor->registers[processor->register_map.at(current_instruction.operand0)] = processor->var_map.at(current_instruction.operand1);
-            // cycles+=2;
             break;
         case SW:
             processor->main_memory[processor->registers[processor->register_map.at(current_instruction.operand2)] +
                         processor->registers[processor->register_map.at(current_instruction.operand1)]] = processor->registers[processor->register_map.at(current_instruction.operand0)];
-            // cycles+=2;
             break;
         case SW_F:
             memcpy(&(processor->main_memory)[processor->registers[processor->register_map.at(current_instruction.operand2)] + processor->registers[processor->register_map.at(current_instruction.operand1)]],
                    &processor->fp_registers[processor->fp_register_map.at(current_instruction.operand0)], 
                    sizeof(float));
-            // cycles+=2;
             break;
         case NOP:
             break;

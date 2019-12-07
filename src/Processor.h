@@ -135,6 +135,7 @@ private:
     float fp_registers[32]    = { {0} };
     
     // void create_fn_map();
+    void update_instructions();
     void fetch_instructions();
     void decode_instructions();
     void execute_instructions();

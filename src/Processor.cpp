@@ -164,54 +164,68 @@ void Processor::run_program()
     while ( registers[31] != -1 )  
     {
         // Print prcoessor state, and wait for 'Enter' keypress
-        #ifdef DEBUG
-            debug_processor();
-            getchar();
-        #endif
+        
 
 
         #if PIPELINED==1
-            execute_instructions();
-            if (!refresh_flag)  
-            {
-                decode_instructions();
-                fetch_instructions();
-                incrementPC();
-            }
+
+
+            update_instructions();
+
+            #ifdef DEBUG
+                debug_processor();
+                getchar();
+            #endif
+
+            fetch_units.at(0).fetch(this);
+            decode_units.at(0).decode();
+            execute_units.at(0).execute(this);
+
             incrementCycles();
+            if (!refresh_flag)  incrementPC();
             refresh_flag = false;
+
+
         #else
-            fetch_instructions();
-            incrementCycles();
 
+            fetch_units.at(0).update_next_instruction(this);
+            fetch_units.at(0).update_current_instruction();
             #ifdef DEBUG
                 debug_processor();
                 getchar();
             #endif
-
-            decode_instructions();
+            fetch_units.at(0).fetch(this);
             incrementCycles();
+            fetch_units.at(0).is_empty = true;
 
+
+
+            decode_units.at(0).update_next_instruction(fetch_units.at(0));
+            decode_units.at(0).update_current_instruction();
             #ifdef DEBUG
                 debug_processor();
                 getchar();
             #endif
+            decode_units.at(0).decode();
+            incrementCycles();
+            decode_units.at(0).is_empty = true;
 
-            execute_instructions();
+
+
+            execute_units.at(0).update_next_instruction(decode_units.at(0));
+            execute_units.at(0).update_current_instruction();
+            #ifdef DEBUG
+                debug_processor();
+                getchar();
+            #endif
+            execute_units.at(0).execute(this);
             incrementCycles();
             incrementPC();
-
-            #ifdef DEBUG
-                    debug_processor();
-                    getchar();
-            #endif
-            
             execute_units.at(0).is_empty = true;
 
         #endif 
     }
 
-    // Some computation here
     auto end = std::chrono::system_clock::now();
 
     std::chrono::duration<double> elapsed_seconds = end - start;
@@ -224,7 +238,6 @@ void Processor::run_program()
         cout << "Program Result=" << registers[16] << endl;
     #endif
 
-    
 
     #ifdef PRINT_STATS
         printf("Time Elapsed: %.2f\n", elapsed_seconds.count());
@@ -235,58 +248,40 @@ void Processor::run_program()
     #else
         cout << registers[16]; 
     #endif
-    
+
     output_image("after.pgm", 16, 16, &main_memory[0]);
 }
 
-// Get the Instruction represented by the program counter
-void Processor::fetch_instructions()  {
-    for (int f=0; f < FETCH_UNITS; f++)  
-    {
-        fetch_units.at(f).newInstruction(this);
-        fetch_units.at(f).fetch(this);
-    }
-}
-
-void Processor::decode_instructions()  
+void Processor::update_instructions()  
 {
-    for (int d=0; d < DECODE_UNITS; d++)  
+    for (int u = 0; u < FETCH_UNITS; u++)  
     {
-        for (int f=0; f < FETCH_UNITS; f++)  
-        {
-            if (!fetch_units.at(f).is_empty)
-            {
-                fetch_units.at(f).passToDecodeUnit(&decode_units.at(d));
-                break;
-            }
-        }
-        decode_units.at(d).decode();
+        fetch_units.at(u).update_next_instruction(this);
+        decode_units.at(u).update_next_instruction(fetch_units.at(u));
+        execute_units.at(u).update_next_instruction(decode_units.at(u));
     }
-}
 
+    for (int u = 0; u < FETCH_UNITS; u++)  
+        fetch_units.at(u).update_current_instruction();
+    
+    for (int u = 0; u < DECODE_UNITS; u++)  
+        decode_units.at(u).update_current_instruction();
 
-// If statements identify the correct operation, and then execute it.
-void Processor::execute_instructions()  
-{
-    for (int e=0; e < EXECUTE_UNITS; e++)  
-    {
-        for (int d=0; d < DECODE_UNITS; d++)  
-        {
-            if (!decode_units.at(d).is_empty)
-            {
-                decode_units.at(d).passToExecuteUnit(&execute_units.at(e));
-                break;
-            }
-        }
-        execute_units.at(e).execute(this);
-    }
+    for (int u = 0; u < EXECUTE_UNITS; u++)  
+        execute_units.at(u).update_current_instruction();
 }
 
 void Processor::refresh_pipeline() 
 {
-    fetch_units.at(0).current_instruction   = nop_instruction;
-    decode_units.at(0).current_instruction  = nop_instruction;
-    execute_units.at(0).current_instruction = nop_instruction;
+    Instruction empty_instruction;
+    fetch_units.at(0).current_instruction   = empty_instruction;
+    decode_units.at(0).current_instruction  = empty_instruction;
+    execute_units.at(0).current_instruction = empty_instruction;
+
+    fetch_units.at(0).next_instruction      = empty_instruction;
+    decode_units.at(0).next_instruction     = empty_instruction;
+    execute_units.at(0).next_instruction    = empty_instruction;
+
     fetch_units.at(0).is_empty   = true;
     decode_units.at(0).is_empty  = true;
     execute_units.at(0).is_empty = true;
@@ -358,15 +353,9 @@ void Processor::debug_processor()
     // }
 
     cout << endl << endl;
-#if PIPELINED==1
-    cout << "Fetch Unit: "   << (PC < instructions.size() ? instructions.at(PC).to_string() : "nop" ) << endl;
-    cout << "Decode Unit: "  << (fetch_units.at(0).is_empty  ? "Empty"  : fetch_units.at(0).current_instruction.to_string())  << endl;
-    cout << "Execute Unit: " << (decode_units.at(0).is_empty ? "Empty"  : decode_units.at(0).current_instruction.to_string()) << endl;
-#else
-    cout << "Fetch Unit: "   << (fetch_units.at(0).is_empty ? "Empty"    : fetch_units.at(0).current_instruction.to_string() ) << endl;
+    cout << "Fetch Unit: "   << (fetch_units.at(0).is_empty   ? "Empty"  : fetch_units.at(0).current_instruction.to_string() )  << endl;
     cout << "Decode Unit: "  << (decode_units.at(0).is_empty  ? "Empty"  : decode_units.at(0).current_instruction.to_string())  << endl;
     cout << "Execute Unit: " << (execute_units.at(0).is_empty ? "Empty"  : execute_units.at(0).current_instruction.to_string()) << endl;
-#endif
     cout << endl << endl;
 }
 

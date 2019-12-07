@@ -9,7 +9,9 @@ private:
 public:
     FetchUnit();
     Instruction current_instruction;
-    void newInstruction(Processor *processor);
+    Instruction next_instruction;
+    void update_next_instruction(Processor *processor);
+    void update_current_instruction();
     void fetch(Processor *processor);
     void passToDecodeUnit(Processor::DecodeUnit *decodeUnit);
     bool is_empty = true;

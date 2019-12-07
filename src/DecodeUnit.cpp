@@ -1,3 +1,4 @@
+#include "FetchUnit.h"
 #include "DecodeUnit.h"
 #include "ExecuteUnit.h"
 
@@ -7,22 +8,29 @@ Processor::DecodeUnit::DecodeUnit()
     
 }
 
-void Processor::DecodeUnit::newInstruction(Instruction new_instruction)  
+void Processor::DecodeUnit::update_next_instruction(Processor::FetchUnit &fetch_unit)  
 {
-    current_instruction = new_instruction;
+    next_instruction = fetch_unit.current_instruction;
     is_empty = false;
 }
+
+void Processor::DecodeUnit::update_current_instruction()  
+{
+    current_instruction = next_instruction;
+    if (current_instruction.opcode == "")
+        is_empty = true;
+}
+
 
 void Processor::DecodeUnit::decode()  
 {
     if (is_empty)  return;
-    // cout << "Decoding instruction: " << current_instruction.to_string() << endl;
 }
 
-void Processor::DecodeUnit::passToExecuteUnit(Processor::ExecuteUnit *execute_unit)  
-{
-    execute_unit->newInstruction(current_instruction);
-#if PIPELINED==0
-    is_empty = true;
-#endif
-}
+// void Processor::DecodeUnit::passToExecuteUnit(Processor::ExecuteUnit *execute_unit)  
+// {
+//     execute_unit->update_next_instruction(current_instruction);
+//     #if PIPELINED==0
+//         is_empty = true;
+//     #endif
+// }
