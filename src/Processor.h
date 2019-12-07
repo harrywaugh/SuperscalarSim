@@ -20,6 +20,9 @@
 #define FETCH_UNITS 1
 #define DECODE_UNITS 1
 #define EXECUTE_UNITS 1
+#define MEM_UNITS 1
+#define BRANCH_UNITS 1
+#define ALU_UNITS 1
 
 
 using namespace std;
@@ -31,22 +34,35 @@ private:
     int PC;
     int cycles = 0;
     int executed_instructions = 0;
+    int cycles_waiting_for_memory = 0;
     int free_mem_pointer = 0;
-    int speculative_jumps = 0;
     bool refresh_flag = false;
 
     Instruction nop_instruction;
 
-    class ExecuteUnit;
-    class DecodeUnit;
     class FetchUnit;
+    class DecodeUnit;
+    class ExecuteUnit;
+    class BranchUnit;
+    class MemoryUnit;
+    class ALU;
 
     vector<FetchUnit> fetch_units;
     vector<DecodeUnit> decode_units;
     vector<ExecuteUnit> execute_units;
+    vector<BranchUnit> branch_units;
+    vector<MemoryUnit> mem_units;
+    vector<ALU> alu_units;
+
     vector<Instruction> instructions;
+
+    vector<Instruction> alu_reservation_station;
+    vector<Instruction> branch_reservation_station;
+    vector<Instruction> mem_reservation_station;
+
     queue<int> branch_record;
     stack<int> return_address_stack;
+
     map<string, int> fn_map;
     map<int, string> fn_map_reverse;
     map<string, int> var_map;

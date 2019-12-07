@@ -1,6 +1,6 @@
 CC=g++
 
-CFLAGS=-std=c++11 -Wno-braced-scalar-init -Wno-writable-strings
+CFLAGS=-std=c++11 -Wno-braced-scalar-init -Wno-writable-strings -Wno-switch
 
 simulator: src/main.cpp
 	@echo "Compiling simulator..."
@@ -39,7 +39,25 @@ pipelined-test: clean pipelined
 	echo "Running tests...\n"
 	@python src/run_tests.py
 
+################################################
+## Superscalar
+################################################
 
+superscalar: src/main.cpp
+	make pipelined VARS="-DSUPERSCALAR=1 ${VARS}"
+
+superscalar-stats: src/main.cpp
+	make superscalar VARS="-DPRINT_STATS=1 ${VARS}"
+
+superscalar-debug: src/main.cpp
+	make superscalar-stats VARS="-DDEBUG ${VARS}"
+
+superscalar-test: clean superscalar
+	echo "Running tests...\n"
+	@python src/run_tests.py
+
+################################################
+## Misc
 ################################################
 
 clean:
