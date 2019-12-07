@@ -10,7 +10,7 @@ stats: src/main.cpp
 	@echo "Compiling simulator..."
 	${CC} -std=c++11 src/*.cpp -o simulator.exe -DPRINT_STATS=1 -DPIPELINED=1 ${WARN}
 
-non-pipelined-stats: src/main.cpp
+non-pipelined: src/main.cpp
 	@echo "Compiling simulator..."
 	${CC} -std=c++11 src/*.cpp -o simulator.exe -DPRINT_STATS=1 -DPIPELINED=0 ${WARN}
 

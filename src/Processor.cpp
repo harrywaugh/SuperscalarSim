@@ -164,52 +164,51 @@ void Processor::run_program()
     while ( registers[31] != -1 )  
     {
         // Print prcoessor state, and wait for 'Enter' keypress
-#ifdef DEBUG
-        debug_processor();
-        getchar();
-#endif
+        #ifdef DEBUG
+            debug_processor();
+            getchar();
+        #endif
 
 
-#if PIPELINED==1
-        execute_instructions();
-        if (!refresh_flag)  
-        {
-            decode_instructions();
+        #if PIPELINED==1
+            execute_instructions();
+            if (!refresh_flag)  
+            {
+                decode_instructions();
+                fetch_instructions();
+                incrementPC();
+            }
+            incrementCycles();
+            refresh_flag = false;
+        #else
             fetch_instructions();
+            incrementCycles();
+
+            #ifdef DEBUG
+                debug_processor();
+                getchar();
+            #endif
+
+            decode_instructions();
+            incrementCycles();
+
+            #ifdef DEBUG
+                debug_processor();
+                getchar();
+            #endif
+
+            execute_instructions();
+            incrementCycles();
             incrementPC();
-        }
-        incrementCycles();
-        refresh_flag = false;
-#else
-        fetch_instructions();
-        incrementCycles();
 
-#ifdef DEBUG
-        debug_processor();
-        getchar();
-#endif
+            #ifdef DEBUG
+                    debug_processor();
+                    getchar();
+            #endif
+            
+            execute_units.at(0).is_empty = true;
 
-        decode_instructions();
-        incrementCycles();
-
-#ifdef DEBUG
-        debug_processor();
-        getchar();
-#endif
-
-        execute_instructions();
-        incrementCycles();
-        incrementPC();
-
-#ifdef DEBUG
-        debug_processor();
-        getchar();
-#endif
-#if PIPELINED==0
-        execute_units.at(0).is_empty = true;
-#endif
-
-#endif
+        #endif 
     }
 
     // Some computation here
@@ -219,24 +218,24 @@ void Processor::run_program()
     std::time_t end_time = std::chrono::system_clock::to_time_t(end);
 
     // Print prcoessor state and exit
-#ifdef DEBUG
-    PC = -1;
-    debug_processor();
-    cout << "Program Result=" << registers[16] << endl;
-#endif
+    #ifdef DEBUG
+        PC = -1;
+        debug_processor();
+        cout << "Program Result=" << registers[16] << endl;
+    #endif
 
     
 
-#ifdef PRINT_STATS
-    printf("Time Elapsed: %.2f\n", elapsed_seconds.count());
-    printf("Executed Instructions = %d\n", executed_instructions);
-    printf("Total Cycles = %.d\n\n", cycles);
-    printf("Instructions per Cycle = %.2f\n", (float)(executed_instructions) / (float)(cycles));
-    printf("Instructions per Second = %.2f\n", (float)(executed_instructions) / (float)(elapsed_seconds.count()));
-#endif
-
-    cout << registers[16];
-
+    #ifdef PRINT_STATS
+        printf("Time Elapsed: %.2f\n", elapsed_seconds.count());
+        printf("Executed Instructions = %d\n", executed_instructions);
+        printf("Total Cycles = %.d\n\n", cycles);
+        printf("Instructions per Cycle = %.2f\n", (float)(executed_instructions) / (float)(cycles));
+        printf("Instructions per Second = %.2f\n", (float)(executed_instructions) / (float)(elapsed_seconds.count()));
+    #else
+        cout << registers[16]; 
+    #endif
+    
     output_image("after.pgm", 16, 16, &main_memory[0]);
 }
 
@@ -255,10 +254,6 @@ void Processor::decode_instructions()
     {
         for (int f=0; f < FETCH_UNITS; f++)  
         {
-
-            // cout << "Fetch unit is " <<  (fetch_units.at(f).is_empty ? "empty" : "full") << endl;
-
-
             if (!fetch_units.at(f).is_empty)
             {
                 fetch_units.at(f).passToDecodeUnit(&decode_units.at(d));
@@ -277,8 +272,6 @@ void Processor::execute_instructions()
     {
         for (int d=0; d < DECODE_UNITS; d++)  
         {
-            // cout << "Decode unit is " <<  (decode_units.at(d).is_empty ? "empty" : "full") << endl;
-
             if (!decode_units.at(d).is_empty)
             {
                 decode_units.at(d).passToExecuteUnit(&execute_units.at(e));
