@@ -6,32 +6,41 @@ simulator: src/main.cpp
 	@echo "Compiling simulator..."
 	${CC} ${CFLAGS} src/*.cpp -o simulator.exe $(VARS)
 
+
+################################################
+## Non Pipelined
+################################################
+
+stats: src/main.cpp
+	make simulator VARS="-DPRINT_STATS=1 ${VARS}"
+
+debug: src/main.cpp
+	make simulator-stats VARS="-DDEBUG ${VARS}"
+
+test: clean simulator
+	echo "Running tests...\n"
+	@python src/run_tests.py
+
+
+################################################
+## Pipelined
+################################################
+
 pipelined: src/main.cpp
-	make simulator VARS="-DPIPELINED ${VARS}"
+	make simulator VARS="-DPIPELINED=1 ${VARS}"
 
 pipelined-stats: src/main.cpp
 	make pipelined VARS="-DPRINT_STATS=1 ${VARS}"
 
 pipelined-debug: src/main.cpp
-	make pipelined-stats VARS="-DDEBUG=1 ${VARS}"
+	make pipelined-stats VARS="-DDEBUG ${VARS}"
+
+pipelined-test: clean pipelined
+	echo "Running tests...\n"
+	@python src/run_tests.py
 
 
-
-# stats: src/main.cpp
-# 	@echo "Compiling simulator..."
-# 	${CC} -std=c++11 src/*.cpp -o simulator.exe -DPRINT_STATS=1 -DPIPELINED=1 ${WARN}
-
-# non-pipelined: src/main.cpp
-# 	@echo "Compiling simulator..."
-# 	${CC} -std=c++11 src/*.cpp -o simulator.exe -DPRINT_STATS=1 -DPIPELINED=0 ${WARN}
-
-# debug: src/main.cpp
-# 	@echo "Compiling simulator..."
-# 	${CC} -std=c++11 src/*.cpp -o simulator.exe -DDEBUG=1 -DPRINT_STATS=1 -DPIPELINED=1 $(VARS) ${WARN}
-
-# tests: clean simulator
-# 	@echo "Running tests...\n"
-# 	@python src/run_tests.py
+################################################
 
 clean:
 	@echo "Cleaning up..."

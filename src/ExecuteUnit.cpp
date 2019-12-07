@@ -32,12 +32,6 @@ void Processor::ExecuteUnit::execute(Processor *processor)
             break;
         case BEQ:
             #ifdef PIPELINED
-                if (processor->registers[processor->register_map.at(current_instruction.operand0)] ==
-                    processor->registers[processor->register_map.at(current_instruction.operand1)])
-                {
-                    processor->PC += stoi(current_instruction.operand2)-1;
-                }
-            #else
                 if (processor->registers[processor->register_map.at(current_instruction.operand0)] !=
                     processor->registers[processor->register_map.at(current_instruction.operand1)])
                 {
@@ -50,16 +44,16 @@ void Processor::ExecuteUnit::execute(Processor *processor)
                 {
                     processor->branch_record.pop();
                 }
-            #endif
-            break;
-        case BLT:
-            #ifdef PIPELINED
-                if (processor->registers[processor->register_map.at(current_instruction.operand0)] <
+            #else
+                if (processor->registers[processor->register_map.at(current_instruction.operand0)] ==
                     processor->registers[processor->register_map.at(current_instruction.operand1)])
                 {
                     processor->PC += stoi(current_instruction.operand2)-1;
                 }
-            #else
+            #endif
+            break;
+        case BLT:
+            #ifdef PIPELINED
                 if (processor->registers[processor->register_map.at(current_instruction.operand0)] >=
                     processor->registers[processor->register_map.at(current_instruction.operand1)])
                 {
@@ -71,6 +65,12 @@ void Processor::ExecuteUnit::execute(Processor *processor)
                 else
                 {
                     processor->branch_record.pop();
+                }
+            #else
+                if (processor->registers[processor->register_map.at(current_instruction.operand0)] <
+                    processor->registers[processor->register_map.at(current_instruction.operand1)])
+                {
+                    processor->PC += stoi(current_instruction.operand2)-1;
                 }
             #endif
             break;

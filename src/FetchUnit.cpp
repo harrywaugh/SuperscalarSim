@@ -34,17 +34,15 @@ void Processor::FetchUnit::fetch(Processor *processor)
             break;
         case BEQ:
             #ifdef PIPELINED 
-                return
+                processor->branch_record.push(processor->PC);
+                processor->PC += stoi(current_instruction.operand2)-1;
             #endif
-            processor->branch_record.push(processor->PC);
-            processor->PC += stoi(current_instruction.operand2)-1;
             break;
         case BLT:
             #ifdef PIPELINED 
-                return
+                processor->branch_record.push(processor->PC);
+                processor->PC += stoi(current_instruction.operand2)-1;
             #endif
-            processor->branch_record.push(processor->PC);
-            processor->PC += stoi(current_instruction.operand2)-1;
             break;
         default:
             break;
