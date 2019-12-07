@@ -193,12 +193,17 @@ void Processor::run_program()
                     debug_processor();
                     getchar();
                 #endif
-
-                fetch_units.at(0).fetch(this);
-                decode_units.at(0).decode(this);
-                branch_units.at(0).execute(this);
-                mem_units.at(0).execute(this);
-                alu_units.at(0).execute(this);
+                
+                for (int u = 0; u < FETCH_UNITS; u++)
+                    fetch_units.at(u).fetch(this);
+                for (int u = 0; u < DECODE_UNITS; u++)
+                    decode_units.at(u).decode(this);
+                for (int u = 0; u < BRANCH_UNITS; u++)
+                    branch_units.at(u).execute(this);
+                for (int u = 0; u < MEM_UNITS; u++)
+                    mem_units.at(u).execute(this);
+                for (int u = 0; u < ALU_UNITS; u++)
+                    alu_units.at(u).execute(this);
 
                 incrementCycles();
                 if (!refresh_flag)  incrementPC();
@@ -276,7 +281,9 @@ void Processor::run_program()
         printf("Executed Instructions = %d\n", executed_instructions);
         printf("Total Cycles = %.d\n\n", cycles);
         printf("Instructions per Cycle = %.2f\n", (float)(executed_instructions) / (float)(cycles));
-        printf("Instructions per Second = %.2f\n", (float)(executed_instructions) / (float)(elapsed_seconds.count()));
+        printf("Instructions per Second = %.2f\n\n", (float)(executed_instructions) / (float)(elapsed_seconds.count()));
+        printf("Time spent waiting for Mem Access = %d\n\n", cycles_waiting_for_memory);
+
     #else
         cout << registers[16]; 
     #endif

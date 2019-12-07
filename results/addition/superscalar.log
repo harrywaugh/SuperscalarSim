@@ -1,9 +1,9 @@
 Time Elapsed: 0.00
 Executed Instructions = 9
-Total Cycles = 33
+Total Cycles = 17
 
-Instructions per Cycle = 0.27
-Instructions per Second = 147540.98
+Instructions per Cycle = 0.53
+Instructions per Second = 79646.02
 
 Time spent waiting for Mem Access = 6
 
