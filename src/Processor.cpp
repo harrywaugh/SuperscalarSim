@@ -226,7 +226,7 @@ void Processor::run_program()
 
 #ifdef PRINT_STATS
     printf("Time Elapsed: %.2f\n", elapsed_seconds.count());
-    printf("Executed Instructions = %.2f\n", executed_instructions);
+    printf("Executed Instructions = %d\n", executed_instructions);
     printf("Total Cycles = %.d\n\n", cycles);
     printf("Instructions per Cycle = %.2f\n", (float)(executed_instructions) / (float)(cycles));
     printf("Instructions per Second = %.2f\n", (float)(executed_instructions) / (float)(elapsed_seconds.count()));
