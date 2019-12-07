@@ -324,27 +324,50 @@ void Processor::update_instructions()
 void Processor::refresh_pipeline() 
 {
     Instruction empty_instruction;
-    fetch_units.at(0).current_instruction   = empty_instruction;
-    decode_units.at(0).current_instruction  = empty_instruction;
-    execute_units.at(0).current_instruction = empty_instruction;
-    branch_units.at(0).current_instruction  = empty_instruction;
-    mem_units.at(0).current_instruction     = empty_instruction;
-    alu_units.at(0).current_instruction     = empty_instruction;
+    for (int u = 0; u < FETCH_UNITS; u++)  
+    {
+        fetch_units.at(u).current_instruction   = empty_instruction;
+        fetch_units.at(u).next_instruction      = empty_instruction;
+        fetch_units.at(u).is_empty   = true;
+    }
 
-    fetch_units.at(0).next_instruction      = empty_instruction;
-    decode_units.at(0).next_instruction     = empty_instruction;
-    execute_units.at(0).next_instruction    = empty_instruction;
-    branch_units.at(0).next_instruction     = empty_instruction;
-    mem_units.at(0).next_instruction        = empty_instruction;
-    alu_units.at(0).next_instruction        = empty_instruction;
+    for (int u = 0; u < DECODE_UNITS; u++)  
+    {
+        decode_units.at(u).current_instruction  = empty_instruction;
+        decode_units.at(u).next_instruction     = empty_instruction;
+        decode_units.at(u).is_empty  = true;
+    }
 
-    fetch_units.at(0).is_empty   = true;
-    decode_units.at(0).is_empty  = true;
-    execute_units.at(0).is_empty = true;
-    branch_units.at(0).is_empty  = true;
-    mem_units.at(0).is_empty     = true;
-    alu_units.at(0).is_empty     = true;
+    for (int u = 0; u < EXECUTE_UNITS; u++)  
+    {
+        execute_units.at(u).current_instruction = empty_instruction;
+        execute_units.at(u).next_instruction    = empty_instruction;
+        execute_units.at(u).is_empty = true;
+    }
 
+    for (int u = 0; u < BRANCH_UNITS; u++)  
+    {
+        branch_units.at(u).current_instruction  = empty_instruction;
+        branch_units.at(u).next_instruction     = empty_instruction;
+        branch_units.at(u).is_empty  = true;
+    }
+
+
+    for (int u = 0; u < ALU_UNITS; u++)  
+    {
+        alu_units.at(u).current_instruction     = empty_instruction;
+        alu_units.at(u).next_instruction        = empty_instruction;
+        alu_units.at(u).is_empty     = true;
+    }
+
+
+    for (int u = 0; u < MEM_UNITS; u++)  
+    {
+        mem_units.at(u).current_instruction     = empty_instruction;
+        mem_units.at(u).next_instruction        = empty_instruction;
+        mem_units.at(u).is_empty     = true;
+    }
+    
     mem_reservation_station.clear();
     branch_reservation_station.clear();
     alu_reservation_station.clear();
