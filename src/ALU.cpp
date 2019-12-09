@@ -37,16 +37,16 @@ void Processor::ALU::execute(Processor *processor)
                 processor->registers[processor->register_map.at(current_instruction.operand1)] + processor->registers[processor->register_map.at(current_instruction.operand2)];
             break;
         case ADD_F:
-            processor->fp_registers[processor->fp_register_map.at(current_instruction.operand0)] =
-                processor->fp_registers[processor->fp_register_map.at(current_instruction.operand1)] + processor->fp_registers[processor->fp_register_map.at(current_instruction.operand2)];
+            processor->fp_register_file[processor->fp_register_map.at(current_instruction.operand0)] =
+                processor->fp_register_file[processor->fp_register_map.at(current_instruction.operand1)] + processor->fp_register_file[processor->fp_register_map.at(current_instruction.operand2)];
             break;
         case  ADDI:
             processor->registers[processor->register_map.at(current_instruction.operand0)] =
                 processor->registers[processor->register_map.at(current_instruction.operand1)] + stoi(current_instruction.operand2);
             break;
         case  ADDI_F:
-            processor->fp_registers[processor->fp_register_map.at(current_instruction.operand0)] =
-                processor->fp_registers[processor->fp_register_map.at(current_instruction.operand1)] + stof(current_instruction.operand2);
+            processor->fp_register_file[processor->fp_register_map.at(current_instruction.operand0)] =
+                processor->fp_register_file[processor->fp_register_map.at(current_instruction.operand1)] + stof(current_instruction.operand2);
             break;
         case SUB:
             processor->registers[processor->register_map.at(current_instruction.operand0)] =
@@ -65,16 +65,16 @@ void Processor::ALU::execute(Processor *processor)
                 processor->registers[processor->register_map.at(current_instruction.operand1)] * stoi(current_instruction.operand2);
             break;
         case MULI_F:
-            processor->fp_registers[processor->fp_register_map.at(current_instruction.operand0)] =
-                processor->fp_registers[processor->fp_register_map.at(current_instruction.operand1)] * stof(current_instruction.operand2);
+            processor->fp_register_file[processor->fp_register_map.at(current_instruction.operand0)] =
+                processor->fp_register_file[processor->fp_register_map.at(current_instruction.operand1)] * stof(current_instruction.operand2);
             break;
         case DIVI:
             processor->registers[processor->register_map.at(current_instruction.operand0)] =
                 processor->registers[processor->register_map.at(current_instruction.operand1)] / stoi(current_instruction.operand2);
             break;
         case DIVI_F:
-            processor->fp_registers[processor->fp_register_map.at(current_instruction.operand0)] =
-                processor->fp_registers[processor->fp_register_map.at(current_instruction.operand1)] / stof(current_instruction.operand2);
+            processor->fp_register_file[processor->fp_register_map.at(current_instruction.operand0)] =
+                processor->fp_register_file[processor->fp_register_map.at(current_instruction.operand1)] / stof(current_instruction.operand2);
             break;
         case AND:
             processor->registers[processor->register_map.at(current_instruction.operand0)] =

@@ -1,10 +1,12 @@
 #include "Processor.h"
 #include "FetchUnit.h"
 #include "DecodeUnit.h"
+#include "DispatchUnit.h"
 #include "ExecuteUnit.h"
 #include "MemoryUnit.h"
 #include "ALU.h"
 #include "BranchUnit.h"
+#include "CommitUnit.h"
 
 using namespace std;
 
@@ -272,7 +274,6 @@ void Processor::run_program()
     #ifdef DEBUG
         PC = -1;
         debug_processor();
-        cout << "Program Result=" << registers[16] << endl;
     #endif
 
 
@@ -282,8 +283,10 @@ void Processor::run_program()
         printf("Total Cycles = %.d\n\n", cycles);
         printf("Instructions per Cycle = %.2f\n", (float)(executed_instructions) / (float)(cycles));
         printf("Instructions per Second = %.2f\n\n", (float)(executed_instructions) / (float)(elapsed_seconds.count()));
-        printf("Time spent waiting for Mem Access = %d\n\n", cycles_waiting_for_memory);
+        printf("Time spent waiting for Memory Access = %d\n\n", cycles_waiting_for_memory);
+        printf("Fraction of cycles spent waiting for Memory Access = %.2f\n", (float)(cycles_waiting_for_memory)/(float)cycles);
 
+        cout << "\nProgram Result=" << registers[16] << endl;
     #else
         cout << registers[16]; 
     #endif
@@ -431,7 +434,7 @@ void Processor::debug_processor()
     for (int j = 0; j < 4; j++)  {
         for (int i = 0; i < 8; i++)  {
             if (j*8+i < 10)  cout << " ";
-            cout << j*8+i << ": " << fp_registers[j*8+i] << " ";
+            cout << j*8+i << ": " << fp_register_file[j*8+i] << " ";
         }
         cout << endl;
     }

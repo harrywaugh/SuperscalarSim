@@ -18,8 +18,7 @@ debug: src/main.cpp
 	make simulator-stats VARS="-DDEBUG ${VARS}"
 
 test: clean simulator
-	echo "Running tests...\n"
-	@python src/run_tests.py
+	@python3 src/run_tests.py
 
 
 ################################################
@@ -36,8 +35,7 @@ pipelined-debug: src/main.cpp
 	make pipelined-stats VARS="-DDEBUG ${VARS}"
 
 pipelined-test: clean pipelined
-	echo "Running tests...\n"
-	@python src/run_tests.py
+	@python3 src/run_tests.py
 
 ################################################
 ## Superscalar
@@ -53,12 +51,33 @@ superscalar-debug: src/main.cpp
 	make superscalar-stats VARS="-DDEBUG ${VARS}"
 
 superscalar-test: clean superscalar
-	echo "Running tests...\n"
-	@python src/run_tests.py
+	@python3 src/run_tests.py
 
 ################################################
 ## Misc
 ################################################
+
+
+check:
+	@echo "Running scalar tests..."
+	make test -j
+	./simulator.exe programs/stencil.benchmark > /dev/null
+	@echo "Difference between stencil results and correct image:\n"
+	diff 16x16_correct.pgm after.pgm 
+
+	@echo "Running pipelined tests..."
+	make pipelined-test -j
+	./simulator.exe programs/stencil.benchmark > /dev/null
+	@echo "Difference between stencil results and correct image:\n"
+	diff 16x16_correct.pgm after.pgm 
+
+	@echo "Running superscalar tests..."
+	make superscalar-test -j
+	./simulator.exe programs/stencil.benchmark > /dev/null
+	@echo "Difference between stencil results and correct image:\n"
+	diff 16x16_correct.pgm after.pgm 
+
+
 
 clean:
 	@echo "Cleaning up..."

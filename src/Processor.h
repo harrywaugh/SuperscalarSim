@@ -19,10 +19,12 @@
 
 #define FETCH_UNITS 1
 #define DECODE_UNITS 1
+#define DISPATCH_UNITS 1
 #define EXECUTE_UNITS 1
 #define MEM_UNITS 1
 #define BRANCH_UNITS 1
 #define ALU_UNITS 1
+#define COMMIT_UNITS 1
 
 
 using namespace std;
@@ -42,13 +44,16 @@ private:
 
     class FetchUnit;
     class DecodeUnit;
+    class DispatchUnit;
     class ExecuteUnit;
     class BranchUnit;
     class MemoryUnit;
     class ALU;
+    class CommitUnit;
 
     vector<FetchUnit> fetch_units;
     vector<DecodeUnit> decode_units;
+    vector<DispatchUnit> dispatch_units;
     vector<ExecuteUnit> execute_units;
     vector<BranchUnit> branch_units;
     vector<MemoryUnit> mem_units;
@@ -148,7 +153,7 @@ private:
 
     int main_memory[1024] = {0};
     int registers[32]       = { {0} };
-    float fp_registers[32]    = { {0} };
+    float fp_register_file[32]    = { {0} };
     
     // void create_fn_map();
     void update_instructions();

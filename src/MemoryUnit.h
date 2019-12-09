@@ -1,5 +1,7 @@
 #include "Processor.h"
 
+#define MEM_ACCESS_TIME 1
+
 using namespace std;
 
 #pragma once
@@ -15,4 +17,5 @@ public:
     void execute(Processor *processor);
     void completeInstruction(Processor *processor);
     bool is_empty = true;
+    int blocking_for = -1;
 };
