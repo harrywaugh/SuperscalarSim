@@ -12,7 +12,6 @@ void Processor::BranchUnit::update_next_instruction(Processor *processor)
     if (processor->branch_reservation_station.size() == 0)  return;
     next_instruction = processor->branch_reservation_station.at(0);
     processor->branch_reservation_station.erase(processor->branch_reservation_station.begin());
-
     is_empty = false;
 }
 

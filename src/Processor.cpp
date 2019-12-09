@@ -15,7 +15,7 @@ Processor::Processor()
 {
     PC = 0;
 
-    Instruction nop("\tnop");
+    Instruction nop("\tnop", -1);
     nop_instruction = nop;
 
     for (int f=0; f < FETCH_UNITS; f++)
@@ -85,7 +85,7 @@ void Processor::incrementCycles()
 void Processor::addInstruction(string line)  
 {
     // Instantiate Instruction object, and store in instructions list.
-    Instruction new_instruction(line);
+    Instruction new_instruction(line, instructions.size());
     instructions.push_back(new_instruction);
 }
 
@@ -208,7 +208,8 @@ void Processor::run_program()
                     alu_units.at(u).execute(this);
 
                 incrementCycles();
-                if (!refresh_flag)  incrementPC();
+                // if (!refresh_flag)  incrementPC();
+
                 refresh_flag = false;
 
             #else
@@ -224,12 +225,12 @@ void Processor::run_program()
                 execute_units.at(0).execute(this);
 
                 incrementCycles();
-                if (!refresh_flag)  incrementPC();
                 refresh_flag = false;
             #endif
         #else
 
             fetch_units.at(0).update_next_instruction(this);
+            incrementPC();
             fetch_units.at(0).update_current_instruction();
             #ifdef DEBUG
                 debug_processor();
@@ -259,7 +260,6 @@ void Processor::run_program()
             #endif
             execute_units.at(0).execute(this);
             incrementCycles();
-            incrementPC();
             execute_units.at(0).is_empty = true;
 
         #endif 
@@ -296,26 +296,37 @@ void Processor::run_program()
 
 void Processor::update_instructions()  
 {
+
     for (int u = 0; u < FETCH_UNITS; u++)  
     {
         fetch_units.at(u).update_next_instruction(this);
-        decode_units.at(u).update_next_instruction(fetch_units.at(u));
-        #ifdef SUPERSCALAR
-            branch_units.at(u).update_next_instruction(this);
-            mem_units.at(u).update_next_instruction(this);
-            alu_units.at(u).update_next_instruction(this);
-        #else
-            execute_units.at(u).update_next_instruction(decode_units.at(u));
-        #endif
+        incrementPC();
     }
+
+    for (int u = 0; u < DECODE_UNITS; u++)  
+        decode_units.at(u).update_next_instruction(fetch_units.at(u));
+
+
+    #ifdef SUPERSCALAR
+        for (int u = 0; u < BRANCH_UNITS; u++)  
+            branch_units.at(u).update_next_instruction(this);
+
+        for (int u = 0; u < MEM_UNITS; u++)  
+            mem_units.at(u).update_next_instruction(this);
+
+        for (int u = 0; u < ALU_UNITS; u++)  
+            alu_units.at(u).update_next_instruction(this);
+    #else
+        for (int u = 0; u < EXECUTE_UNITS; u++)  
+            execute_units.at(u).update_next_instruction(decode_units.at(0));
+    #endif
+
 
     for (int u = 0; u < FETCH_UNITS; u++)  
         fetch_units.at(u).update_current_instruction();
     
     for (int u = 0; u < DECODE_UNITS; u++)  
         decode_units.at(u).update_current_instruction();
-
-
     #ifdef SUPERSCALAR
         for (int u = 0; u < BRANCH_UNITS; u++)  
             branch_units.at(u).update_current_instruction();
@@ -415,7 +426,7 @@ void Processor::debug_processor()
             cout << fn_map_reverse.at(i) << ":" << endl;
         cout << "\t";
         cout << i << ". " << instructions.at(i).to_string(); 
-        if (i == PC)
+        if (i == PC - 1)
             cout << "  <- PC";
         cout << endl;
     }
@@ -444,19 +455,16 @@ void Processor::debug_processor()
         for (int i = 0; i < alu_reservation_station.size(); i++)
             cout << i << ". " << alu_reservation_station.at(i).to_string() << endl;
 
-        cout << endl;
-
         cout << "\nBranch Reservation Station: \n" << endl;
         for (int i = 0; i < branch_reservation_station.size(); i++)
             cout << i << ". " << branch_reservation_station.at(i).to_string() << endl;
-
-        cout << endl;
 
         cout << "\nLoad/Store Reservation Station: \n" << endl;
         for (int i = 0; i < mem_reservation_station.size(); i++)
             cout << i << ". " << mem_reservation_station.at(i).to_string() << endl;
 
-        cout << endl;
+        
+
     #endif
 
     // cout << "\nMain Memory : \n" << endl;
@@ -470,13 +478,19 @@ void Processor::debug_processor()
     // }
 
     cout << endl << endl;
-    cout << "Fetch Unit: "   << (fetch_units.at(0).is_empty   ? "Empty"  : fetch_units.at(0).current_instruction.to_string() )  << endl;
-    cout << "Decode Unit: "  << (decode_units.at(0).is_empty  ? "Empty"  : decode_units.at(0).current_instruction.to_string())  << endl;
+    for (int u = 0; u < FETCH_UNITS; u++)  
+        cout << "Fetch Unit "  << u << ": " << (fetch_units.at(u).is_empty   ? "Empty"  : fetch_units.at(u).current_instruction.to_string() )  << endl;
+        
+    for (int u = 0; u < DECODE_UNITS; u++)  
+        cout << "Decode Unit " << u << ": " << (decode_units.at(u).is_empty  ? "Empty"  : decode_units.at(u).current_instruction.to_string())  << endl;
+    
     #ifdef SUPERSCALAR
+        for (int i = 0; i < FETCH_UNITS; i++)
         cout << "Branch Unit: " << (branch_units.at(0).is_empty   ? "Empty"  : branch_units.at(0).current_instruction.to_string()) << endl;
         cout << "Memory Unit: " << (mem_units.at(0).is_empty      ? "Empty"  : mem_units.at(0).current_instruction.to_string()) << endl;
         cout << "ALU Unit: "    << (alu_units.at(0).is_empty      ? "Empty"  : alu_units.at(0).current_instruction.to_string()) << endl;
     #else
+        cout << "Decode Unit: "  << (decode_units.at(0).is_empty  ? "Empty"  : decode_units.at(0).current_instruction.to_string())  << endl;
         cout << "Execute Unit: " << (execute_units.at(0).is_empty ? "Empty"  : execute_units.at(0).current_instruction.to_string()) << endl;
     #endif
     cout << endl << endl;

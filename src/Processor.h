@@ -17,8 +17,13 @@
 // #define PRINT_MEM_TO_BITMAP
 // #define PIPELINED 1
 
-#define FETCH_UNITS 1
-#define DECODE_UNITS 1
+#ifdef SUPERSCALAR
+    #define FETCH_UNITS 2
+    #define DECODE_UNITS 2
+#else
+    #define FETCH_UNITS 1
+    #define DECODE_UNITS 1
+#endif
 #define DISPATCH_UNITS 1
 #define EXECUTE_UNITS 1
 #define MEM_UNITS 1

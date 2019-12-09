@@ -13,7 +13,7 @@ private:
     void correct_mem_syntax();
 
 public :
-    Instruction(string line);
+    Instruction(string line, int PC);
     Instruction();
     ~Instruction();
 
@@ -21,6 +21,7 @@ public :
     string operand0 = "";
     string operand1 = "";
     string operand2 = "";
+    int PC;
 
     string to_string();
 };

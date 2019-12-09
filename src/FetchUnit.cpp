@@ -25,22 +25,23 @@ void Processor::FetchUnit::fetch(Processor *processor)
 {
     switch (processor->string_to_op_map[current_instruction.opcode]) {
         case J:
-            processor->return_address_stack.push(processor->PC);
-            processor->PC = processor->fn_map.at(current_instruction.operand0)-1;
+            processor->return_address_stack.push(current_instruction.PC);
+            processor->PC = processor->fn_map.at(current_instruction.operand0);
             break;
         case RETURN:
-            processor->PC = processor->return_address_stack.top();
+            processor->PC = processor->return_address_stack.top()+1;
             processor->return_address_stack.pop();
+            // Suspected bug here
             break;
         case BEQ:
             #ifdef PIPELINED 
-                processor->branch_record.push(processor->PC);
+                processor->branch_record.push(current_instruction.PC);
                 processor->PC += stoi(current_instruction.operand2)-1;
             #endif
             break;
         case BLT:
             #ifdef PIPELINED 
-                processor->branch_record.push(processor->PC);
+                processor->branch_record.push(current_instruction.PC);
                 processor->PC += stoi(current_instruction.operand2)-1;
             #endif
             break;

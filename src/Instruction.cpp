@@ -7,9 +7,11 @@ Instruction::Instruction()  {
     
 }
 
-Instruction::Instruction(string line)  {
+Instruction::Instruction(string line, int PC)  {
     int pin = 0;
     int comma = 0;
+
+    this->PC = PC;
 
     int start_index = 1;
     int current_index = 1;
