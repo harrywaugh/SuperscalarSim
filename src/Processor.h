@@ -10,6 +10,7 @@
 #include <iomanip>
 
 #include "Instruction.h"
+
 // #include "FetchUnit.h"
 
 // #define DEBUG 0
@@ -18,11 +19,11 @@
 // #define PIPELINED 1
 
 #ifdef SUPERSCALAR
-    #define FETCH_UNITS 2
-    #define DECODE_UNITS 2
+    #define FETCH_INSTR_PER_CYCLE 2
+    #define DECODE_INSTR_PER_CYCLE 2
 #else
-    #define FETCH_UNITS 1
-    #define DECODE_UNITS 1
+    #define FETCH_INSTR_PER_CYCLE 1
+    #define DECODE_INSTR_PER_CYCLE 1
 #endif
 #define DISPATCH_UNITS 1
 #define EXECUTE_UNITS 1
@@ -56,8 +57,8 @@ private:
     class ALU;
     class CommitUnit;
 
-    vector<FetchUnit> fetch_units;
-    vector<DecodeUnit> decode_units;
+    FetchUnit *fetch_unit;
+    DecodeUnit *decode_unit;
     vector<DispatchUnit> dispatch_units;
     vector<ExecuteUnit> execute_units;
     vector<BranchUnit> branch_units;

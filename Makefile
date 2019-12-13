@@ -15,7 +15,7 @@ stats: src/main.cpp
 	make simulator VARS="-DPRINT_STATS=1 ${VARS}"
 
 debug: src/main.cpp
-	make simulator-stats VARS="-DDEBUG ${VARS}"
+	make stats VARS="-DDEBUG ${VARS}"
 
 test: clean simulator
 	@python3 src/run_tests.py
