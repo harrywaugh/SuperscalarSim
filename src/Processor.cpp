@@ -1,12 +1,10 @@
 #include "Processor.h"
 #include "FetchUnit.h"
 #include "DecodeUnit.h"
-#include "DispatchUnit.h"
 #include "ExecuteUnit.h"
 #include "MemoryUnit.h"
 #include "ALU.h"
 #include "BranchUnit.h"
-#include "CommitUnit.h"
 
 using namespace std;
 
@@ -46,6 +44,19 @@ Processor::Processor()
         MemoryUnit new_mem_unit;
         mem_units.push_back(new_mem_unit);
     }
+
+    for (int i = 0; i < REORDER_BUFFER_SIZE; i++)  
+    {
+        reorder_buffer[i].done = false;
+        reorder_buffer[i].is_empty = true;
+    }
+
+    for (int i = 0; i < ALU_RES_STATION_SIZE; i++)  
+        alu_reservation_station[i].is_empty = true;
+    for (int i = 0; i < MEM_RES_STATION_SIZE; i++)  
+        mem_reservation_station[i].is_empty = true;
+    for (int i = 0; i < BRANCH_RES_STATION_SIZE; i++)  
+        branch_reservation_station[i].is_empty = true;
 }
 
 // Processor Destructor
@@ -75,11 +86,29 @@ void Processor::incrementCycles()
     cycles++;
 }
 
+void Processor::incrementROBCommit()
+{
+    ROB_commit_pointer = (ROB_commit_pointer + 1) % REORDER_BUFFER_SIZE;
+}
+
+void Processor::incrementROBIssue()
+{
+    ROB_issue_pointer = (ROB_issue_pointer + 1) % REORDER_BUFFER_SIZE;
+}
+
 void Processor::addInstruction(string line)  
 {
     // Instantiate Instruction object, and store in instructions list.
     Instruction new_instruction(line, instructions.size());
     instructions.push_back(new_instruction);
+}
+
+void Processor::printRSEntry(RS_entry &rs_entry) 
+{
+    cout << rs_entry.op << " " << rs_entry.rat_op0_dependency 
+                        << " " << rs_entry.rat_op1_dependency
+                        << " " << rs_entry.val0 
+                        << " " << rs_entry.val1 << endl;
 }
 
 // Function takes in string and parses function name, and then creates pointer to the first instruction 
@@ -178,7 +207,7 @@ void Processor::run_program()
     auto start = std::chrono::system_clock::now();
 
     // While register exit pin is 0
-    while ( registers[31] != -1 )  
+    while ( register_file[31] != -1 )  
     {
 
         #ifdef PIPELINED
@@ -189,9 +218,13 @@ void Processor::run_program()
                     debug_processor();
                     getchar();
                 #endif
+
+
                 
                 fetch_unit->fetch(this);
                 decode_unit->decode(this);
+
+
                 for (int u = 0; u < BRANCH_UNITS; u++)
                     branch_units.at(u).execute(this);
                 for (int u = 0; u < MEM_UNITS; u++)
@@ -199,8 +232,11 @@ void Processor::run_program()
                 for (int u = 0; u < ALU_UNITS; u++)
                     alu_units.at(u).execute(this);
 
+                commit();
+                dispatch();
+                issue();
+
                 incrementCycles();
-                // if (!refresh_flag)  incrementPC();
 
                 refresh_flag = false;
 
@@ -220,7 +256,7 @@ void Processor::run_program()
                 refresh_flag = false;
             #endif
         #else
-
+            // cout << "REACHED FETCH" << endl;
             fetch_unit->update_next_instruction(this);
             incrementPC();
             fetch_unit->update_current_instruction();
@@ -233,6 +269,7 @@ void Processor::run_program()
             incrementCycles();
             fetch_unit->is_empty = true;
 
+            // cout << "REACHED DECODE" << endl;
 
             decode_unit->update_next_instruction(*fetch_unit);
             decode_unit->update_current_instruction();
@@ -244,6 +281,7 @@ void Processor::run_program()
             incrementCycles();
             decode_unit->is_empty = true;
 
+            // cout << "REACHED EXECUTE" << endl;
 
             execute_units.at(0).update_next_instruction(*decode_unit);
             execute_units.at(0).update_current_instruction();
@@ -279,9 +317,9 @@ void Processor::run_program()
         printf("Time spent waiting for Memory Access = %d\n\n", cycles_waiting_for_memory);
         printf("Fraction of cycles spent waiting for Memory Access = %.2f\n", (float)(cycles_waiting_for_memory)/(float)cycles);
 
-        cout << "\nProgram Result=" << registers[16] << endl;
+        cout << "\nProgram Result=" << register_file[16] << endl;
     #else
-        cout << registers[16]; 
+        cout << register_file[16]; 
     #endif
 
     output_image("after.pgm", 16, 16, &main_memory[0]);
@@ -293,19 +331,18 @@ void Processor::update_instructions()
 
     fetch_unit->update_next_instruction(this);
     incrementPC();
-
     decode_unit->update_next_instruction(*fetch_unit);
 
 
     #ifdef SUPERSCALAR
-        for (int u = 0; u < BRANCH_UNITS; u++)  
-            branch_units.at(u).update_next_instruction(this);
+        // for (int u = 0; u < BRANCH_UNITS; u++)  
+        //     branch_units.at(u).update_next_instruction(this);
 
-        for (int u = 0; u < MEM_UNITS; u++)  
-            mem_units.at(u).update_next_instruction(this);
+        // for (int u = 0; u < MEM_UNITS; u++)  
+        //     mem_units.at(u).update_next_instruction(this);
 
-        for (int u = 0; u < ALU_UNITS; u++)  
-            alu_units.at(u).update_next_instruction(this);
+        // for (int u = 0; u < ALU_UNITS; u++)  
+        //     alu_units.at(u).update_next_instruction(this);
     #else
         for (int u = 0; u < EXECUTE_UNITS; u++)  
             execute_units.at(u).update_next_instruction(*decode_unit);
@@ -313,21 +350,93 @@ void Processor::update_instructions()
 
 
     fetch_unit->update_current_instruction();
-    
     decode_unit->update_current_instruction();
+
     #ifdef SUPERSCALAR
-        for (int u = 0; u < BRANCH_UNITS; u++)  
-            branch_units.at(u).update_current_instruction();
+        // for (int u = 0; u < BRANCH_UNITS; u++)  
+        //     branch_units.at(u).update_current_instruction();
 
-        for (int u = 0; u < MEM_UNITS; u++)  
-            mem_units.at(u).update_current_instruction();
+        // for (int u = 0; u < MEM_UNITS; u++)  
+        //     mem_units.at(u).update_current_instruction();
 
-        for (int u = 0; u < ALU_UNITS; u++)  
-            alu_units.at(u).update_current_instruction();
+        // for (int u = 0; u < ALU_UNITS; u++)  
+        //     alu_units.at(u).update_current_instruction();
     #else
         for (int u = 0; u < EXECUTE_UNITS; u++)  
             execute_units.at(u).update_current_instruction();
     #endif
+}
+
+void Processor::issue()
+{
+//     switch (string_to_op_map[instruction_queue.front().opcode]) 
+//     {
+//         case BEQ: case BLT: case J: case RETURN: case EXIT:
+//             // for (int i = 0; i < BRANCH_RES_STATION_SIZE; i++)
+//             // {
+//             //     reorder_buffer[ROB_issue_pointer] = ROB_entry {
+//             //         register_map.at(instruction_queue.front().operand0),
+
+//             //     }
+//             //     if (branch_reservation_station[i].is_empty)
+//             //     {
+
+//             //         branch_reservation_station[i] = RS_entry {
+//             //             string_to_op_map.at(instruction_queue.front().opcode),
+                                        
+                        
+//             //         }
+//             //     }
+//             // }
+//             break;
+//         case LW: case LA: case LI: case SW: case LW_F: case SW_F: case MV:
+//             for (int i = 0; i < BRANCH_RES_STATION_SIZE; i++)
+//             {
+//                 reorder_buffer[ROB_issue_pointer] = ROB_entry {
+//                     &register_map.at(instruction_queue.front().operand0),
+
+//                 }
+//                 if (branch_reservation_station[i].is_empty)
+//                 {
+
+//                     branch_reservation_station[i] = RS_entry {
+//                         string_to_op_map.at(instruction_queue.front().opcode),
+                                        
+                        
+//                     }
+//                 }
+//             }
+//             break;
+//         default:
+//             for (int i = 0; i < BRANCH_RES_STATION_SIZE; i++)
+//             {
+//                 reorder_buffer[ROB_issue_pointer] = ROB_entry {
+//                     &register_map.at(instruction_queue.front().operand0), // Pointer to dst register
+//                     0, // Value - not ready so just placeholder
+//                     false, // Marks entry as done
+//                     false // Marks entry as not empty
+//                 }
+//                 if (alu_reservation_station[i].is_empty)
+//                 {
+//                     branch_reservation_station[i] = RS_entry {
+//                         string_to_op_map.at(instruction_queue.front().opcode),
+//                         ROB_issue_pointer, // Point to current ROB issue entry
+
+                        
+//                     }
+//                 }
+//             }
+//             break;
+//     }
+}
+
+void Processor::dispatch()
+{
+
+}
+void Processor::commit()
+{
+
 }
 
 void Processor::refresh_pipeline() 
@@ -371,9 +480,9 @@ void Processor::refresh_pipeline()
         mem_units.at(u).is_empty     = true;
     }
     
-    mem_reservation_station.clear();
-    branch_reservation_station.clear();
-    alu_reservation_station.clear();
+    // mem_reservation_station.clear();
+    // branch_reservation_station.clear();
+    // alu_reservation_station.clear();
 
     refresh_flag = true;
 }
@@ -418,34 +527,34 @@ void Processor::debug_processor()
     for (int j = 0; j < 4; j++)  {
         for (int i = 0; i < 8; i++)  {
             if (j*8+i < 10)  cout << " ";
-            cout << j*8+i << ": " << registers[j*8+i] << " ";
+            cout << j*8+i << ": " << register_file[j*8+i] << " ";
         }
         cout << endl;
     }
 
     cout << "\nFP Register Values : \n" << endl;
+    float tmp;
     for (int j = 0; j < 4; j++)  {
         for (int i = 0; i < 8; i++)  {
             if (j*8+i < 10)  cout << " ";
-            cout << j*8+i << ": " << fp_register_file[j*8+i] << " ";
+            memcpy(&tmp, &register_file[j*8+i+32], sizeof(float));
+            cout << j*8+i << ": " << tmp << " ";
         }
         cout << endl;
     }
 
     #ifdef SUPERSCALAR
         cout << "\nALU Reservation Station: \n" << endl;
-        for (int i = 0; i < alu_reservation_station.size(); i++)
-            cout << i << ". " << alu_reservation_station.at(i).to_string() << endl;
+        for (int i = 0; i < ALU_RES_STATION_SIZE\; i++)
+            printRSEntry(alu_reservation_station[i]);
 
         cout << "\nBranch Reservation Station: \n" << endl;
-        for (int i = 0; i < branch_reservation_station.size(); i++)
-            cout << i << ". " << branch_reservation_station.at(i).to_string() << endl;
+        for (int i = 0; i < BRANCH_RES_STATION_SIZE; i++)
+            printRSEntry(branch_reservation_station[i]);
 
         cout << "\nLoad/Store Reservation Station: \n" << endl;
-        for (int i = 0; i < mem_reservation_station.size(); i++)
-            cout << i << ". " << mem_reservation_station.at(i).to_string() << endl;
-
-        
+        for (int i = 0; i < ALU_RES_STATION_SIZE; i++)
+            printRSEntry(mem_reservation_station[i]);
 
     #endif
 

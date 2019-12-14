@@ -32,13 +32,72 @@
 #define ALU_UNITS 1
 #define COMMIT_UNITS 1
 
+#define ALU_RES_STATION_SIZE 16
+#define BRANCH_RES_STATION_SIZE 8
+#define MEM_RES_STATION_SIZE 8
+#define REORDER_BUFFER_SIZE 32
+
+
+enum OPERATION
+{
+    LI,
+    LI_F,
+    EXIT,
+    J,
+    RETURN,
+    BEQ,
+    BLT,
+    ADD,        
+    ADD_F,
+    ADDI,        
+    ADDI_F,
+    SUB,
+    SUBI,
+    MUL,
+    MULI,
+    MULI_F,
+    DIVI,
+    DIVI_F,
+    AND,
+    OR,
+    SLL,
+    SRL,
+    MV,
+    LW,
+    LW_F,
+    LA,
+    SW,
+    SW_F,
+    NOP
+};
+
 
 using namespace std;
+
+
+typedef struct ROB_entry {
+    // Void so works for floating point and integer
+    void *p_register; 
+    int32_t value;
+    bool done;
+    bool is_empty;
+} ROB_entry;
+
+typedef struct RS_entry {
+    OPERATION op;
+    int rob_dst;
+    int rat_op0_dependency;
+    int rat_op1_dependency;
+    int32_t val0;
+    int32_t val1;
+    bool is_empty;
+} RS_entry;
 
 #pragma once
 class Processor
 {
 private:
+    // Stats
     int PC;
     int cycles = 0;
     int executed_instructions = 0;
@@ -50,26 +109,33 @@ private:
 
     class FetchUnit;
     class DecodeUnit;
-    class DispatchUnit;
     class ExecuteUnit;
     class BranchUnit;
     class MemoryUnit;
     class ALU;
-    class CommitUnit;
 
     FetchUnit *fetch_unit;
     DecodeUnit *decode_unit;
-    vector<DispatchUnit> dispatch_units;
     vector<ExecuteUnit> execute_units;
     vector<BranchUnit> branch_units;
     vector<MemoryUnit> mem_units;
     vector<ALU> alu_units;
 
-    vector<Instruction> instructions;
+    int main_memory[1024] = {0};
 
-    vector<Instruction> alu_reservation_station;
-    vector<Instruction> branch_reservation_station;
-    vector<Instruction> mem_reservation_station;
+    int register_file[64]              = { {0} };
+    int register_alias_table[64]       = { {0} };
+
+    ROB_entry reorder_buffer[REORDER_BUFFER_SIZE];
+    short ROB_commit_pointer = 0;
+    short ROB_issue_pointer  = 0;
+
+    vector<Instruction> instructions;
+    queue<Instruction> instruction_queue;
+
+    RS_entry alu_reservation_station[ALU_RES_STATION_SIZE];
+    RS_entry branch_reservation_station[BRANCH_RES_STATION_SIZE];
+    RS_entry mem_reservation_station[MEM_RES_STATION_SIZE];
 
     queue<int> branch_record;
     stack<int> return_address_stack;
@@ -77,7 +143,7 @@ private:
     map<string, int> fn_map;
     map<int, string> fn_map_reverse;
     map<string, int> var_map;
-    map<std::string, int> register_map = {
+    map<std::string, int32_t> register_map = {
         {"$zero", 0},
         {"$v0", 2}, {"$v1", 3},
         {"$a0", 4}, {"$a1", 5}, {"$a2", 6}, {"$a3", 7},
@@ -85,45 +151,10 @@ private:
         {"$s0", 16}, {"$s1", 17}, {"$s2", 18}, {"$s3", 19}, {"$s4", 20}, {"$s5", 21}, {"$s6", 22}, {"$s7", 23},
         {"$t8", 24}, {"$t9", 25},
         {"$ra", 31},
-    };
-    map<std::string, int> fp_register_map = {
-        {"$f0", 0}, {"$f1", 1}, {"$f2", 2}, {"$f3", 3}, {"$f4", 4}, {"$f5", 5}, {"$f6", 6}, {"$f7", 7}, {"$f8", 8}, {"$f9", 9}, {"$f10", 10},
-        {"$f11", 11}, {"$f12", 12}, {"$f13", 13}, {"$f14", 14}, {"$f15", 15}, {"$f16", 16}, {"$f17", 17}, {"$f18", 18}, {"$f19", 19}, 
-        {"$f20", 20}, {"$f21", 21}, {"$f22", 22}, {"$f23", 23}, {"$f24", 24}, {"$f25", 25}, {"$f26", 26}, {"$f27", 27}, {"$f28", 28}, 
-        {"$f31", 31},
-    };
-
-    enum OPERATION
-    {
-        LI,
-        LI_F,
-        EXIT,
-        J,
-        RETURN,
-        BEQ,
-        BLT,
-        ADD,        
-        ADD_F,
-        ADDI,        
-        ADDI_F,
-        SUB,
-        SUBI,
-        MUL,
-        MULI,
-        MULI_F,
-        DIVI,
-        DIVI_F,
-        AND,
-        OR,
-        SLL,
-        SRL,
-        MV,
-        LW,
-        LW_F,
-        LA,
-        SW,
-        SW_F,
-        NOP
+        {"$f0", 32}, {"$f1", 33}, {"$f2", 34}, {"$f3", 35}, {"$f4", 36}, {"$f5", 37}, {"$f6", 38}, {"$f7", 39}, {"$f8", 40}, {"$f9", 41}, {"$f10", 42},
+        {"$f11", 43}, {"$f12", 44}, {"$f13", 45}, {"$f14", 46}, {"$f15", 47}, {"$f16", 48}, {"$f17", 49}, {"$f18", 50}, {"$f19", 51}, 
+        {"$f20", 52}, {"$f21", 53}, {"$f22", 54}, {"$f23", 55}, {"$f24", 56}, {"$f25", 57}, {"$f26", 58}, {"$f27", 59}, {"$f28", 60}, 
+        {"$f31", 61}
     };
 
     map<string, OPERATION> string_to_op_map = {
@@ -157,9 +188,7 @@ private:
         {"sw.f", SW_F},
         {"nop", NOP}};
 
-    int main_memory[1024] = {0};
-    int registers[32]       = { {0} };
-    float fp_register_file[32]    = { {0} };
+
     
     // void create_fn_map();
     void update_instructions();
@@ -168,6 +197,7 @@ private:
     void execute_instructions();
     void refresh_pipeline();
     void debug_processor();
+    void printRSEntry(RS_entry &rs_entry);
 
    
 
@@ -181,6 +211,12 @@ public:
 
     void incrementPC();
     void incrementCycles();
+    void incrementROBCommit();
+    void incrementROBIssue();
+
+    void issue();
+    void dispatch();
+    void commit();
 
     void run_program();
 
