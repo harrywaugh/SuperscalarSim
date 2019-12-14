@@ -77,7 +77,7 @@ using namespace std;
 
 typedef struct ROB_entry {
     // Void so works for floating point and integer
-    void *p_register; 
+    int p_register_dst; 
     int32_t value;
     bool done;
     bool is_empty;
@@ -123,8 +123,8 @@ private:
 
     int main_memory[1024] = {0};
 
-    int register_file[64]              = { {0} };
-    int register_alias_table[64]       = { {0} };
+    int32_t register_file[64]              = { {0} };
+    int32_t register_alias_table[64]       = { {-1} };
 
     ROB_entry reorder_buffer[REORDER_BUFFER_SIZE];
     short ROB_commit_pointer = 0;
