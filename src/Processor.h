@@ -25,11 +25,14 @@
     #define FETCH_INSTR_PER_CYCLE 1
     #define DECODE_INSTR_PER_CYCLE 1
 #endif
+
+#define COMMIT_INSTR_PER_CYCLE 1
+
 #define DISPATCH_UNITS 1
 #define EXECUTE_UNITS 1
 #define MEM_UNITS 1
 #define BRANCH_UNITS 1
-#define ALU_UNITS 1
+#define ALU_UNITS 2
 #define COMMIT_UNITS 1
 
 #define ALU_RES_STATION_SIZE 16
@@ -78,6 +81,7 @@ using namespace std;
 typedef struct ROB_entry {
     // Void so works for floating point and integer
     int p_register_dst; 
+    OPERATION op;
     int32_t value;
     bool done;
     bool is_empty;
@@ -86,10 +90,11 @@ typedef struct ROB_entry {
 typedef struct RS_entry {
     OPERATION op;
     int rob_dst;
-    int rat_op0_dependency;
-    int rat_op1_dependency;
+    int rob_op0_dependency;
+    int rob_op1_dependency;
     int32_t val0;
     int32_t val1;
+    int32_t instruction_id;
     bool is_empty;
 } RS_entry;
 
@@ -131,7 +136,7 @@ private:
     short ROB_issue_pointer  = 0;
 
     vector<Instruction> instructions;
-    queue<Instruction> instruction_queue;
+    vector<Instruction> instruction_queue;
 
     RS_entry alu_reservation_station[ALU_RES_STATION_SIZE];
     RS_entry branch_reservation_station[BRANCH_RES_STATION_SIZE];
@@ -216,11 +221,13 @@ public:
 
     void issue();
     void dispatch();
+    void broadcast();
     void commit();
 
     void run_program();
 
     void output_image(char *filename, const int nx, const int ny, int* image);
 
-    
 };    
+
+ostream& operator<<(std::ostream& out, OPERATION op);

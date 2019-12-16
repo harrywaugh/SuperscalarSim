@@ -25,5 +25,5 @@ void Processor::DecodeUnit::update_current_instruction()
 void Processor::DecodeUnit::decode(Processor *processor)  
 {
     if(is_empty)  return;
-    processor->instruction_queue.push(current_instruction);
+    processor->instruction_queue.push_back(current_instruction);
 }

@@ -18,9 +18,18 @@ void Processor::MemoryUnit::update_next_instruction(Processor *processor)
 
 void Processor::MemoryUnit::update_current_instruction()  
 {
-    current_instruction = next_instruction;
-    if (current_instruction.opcode == "")
-        is_empty = true;
+    // current_instruction = next_instruction;
+    // if (current_instruction.opcode == "")
+    //     is_empty = true;
+}
+
+void Processor::MemoryUnit::update_current_instruction(RS_entry &rs_entry)  
+{
+    current_operand0          = rs_entry.val0;
+    current_operand1          = rs_entry.val1;
+    current_operation = rs_entry.op;
+    is_empty = false;
+    rob_dst = rs_entry.rob_dst;
 }
 
 
@@ -29,25 +38,24 @@ void Processor::MemoryUnit::execute(Processor *processor)
 
     if(is_empty)  return;
 
-    switch (processor->string_to_op_map[current_instruction.opcode]) {
+    switch (current_operation) {
         case MV:
-            processor->register_file[processor->register_map.at(current_instruction.operand0)] = processor->register_file[processor->register_map.at(current_instruction.operand1)];
+            current_result = current_operand0;
             break;
         case LI:
-            processor->register_file[processor->register_map.at(current_instruction.operand0)] = stoi(current_instruction.operand1);
+            current_result = current_operand0;
             break;
         case LI_F:
             float tmp;
             tmp = stof(current_instruction.operand1); 
-            memcpy(&processor->register_file[processor->register_map.at(current_instruction.operand0)], &tmp, sizeof(float));
+            memcpy(&current_result, &tmp, sizeof(float));
             break;
         case LW:
             if (blocking_for == -1)  blocking_for = MEM_ACCESS_TIME;
             blocking_for--;
             processor->cycles_waiting_for_memory++;
             if (blocking_for > 0)  return;
-            processor->register_file[processor->register_map.at(current_instruction.operand0)] = processor->main_memory[processor->register_file[processor->register_map.at(current_instruction.operand2)] +
-                                                                                   processor->register_file[processor->register_map.at(current_instruction.operand1)]];
+            current_result = processor->main_memory[current_operand1 + current_operand0];
             processor->cycles_waiting_for_memory+=2;
             break;
         case LW_F:
@@ -55,21 +63,18 @@ void Processor::MemoryUnit::execute(Processor *processor)
             blocking_for--;
             processor->cycles_waiting_for_memory++;
             if (blocking_for > 0)  return;
-            memcpy(&processor->register_file[processor->register_map.at(current_instruction.operand0)], 
-                   &(processor->main_memory)[processor->register_file[processor->register_map.at(current_instruction.operand2)] + processor->register_file[processor->register_map.at(current_instruction.operand1)]],
-                   sizeof(float));
+            memcpy(&current_result, &(processor->main_memory[current_operand1 + current_operand0]), sizeof(float));
             processor->cycles_waiting_for_memory+=2;
             break;
         case LA:
-            processor->register_file[processor->register_map.at(current_instruction.operand0)] = processor->var_map.at(current_instruction.operand1);
+            current_result = current_operand0;
             break;
         case SW:
             if (blocking_for == -1)  blocking_for = MEM_ACCESS_TIME;
             blocking_for--;
             processor->cycles_waiting_for_memory++;
             if (blocking_for > 0)  return;
-            processor->main_memory[processor->register_file[processor->register_map.at(current_instruction.operand2)] +
-                        processor->register_file[processor->register_map.at(current_instruction.operand1)]] = processor->register_file[processor->register_map.at(current_instruction.operand0)];
+            processor->main_memory[current_operand1 + current_operand0] = current_result;
             processor->cycles_waiting_for_memory+=2;
             break;
         case SW_F:
@@ -77,9 +82,7 @@ void Processor::MemoryUnit::execute(Processor *processor)
             blocking_for--;
             processor->cycles_waiting_for_memory++;
             if (blocking_for > 0)  return;
-            memcpy(&(processor->main_memory)[processor->register_file[processor->register_map.at(current_instruction.operand2)] + processor->register_file[processor->register_map.at(current_instruction.operand1)]],
-                   &processor->register_file[processor->register_map.at(current_instruction.operand0)], 
-                   sizeof(float));
+            memcpy(&(processor->main_memory[current_operand1 + current_operand0]), &current_result, sizeof(float));
             processor->cycles_waiting_for_memory+=2;
             break;
     }
@@ -90,5 +93,15 @@ void Processor::MemoryUnit::completeInstruction(Processor *processor)
 {
     processor->executed_instructions++;
     is_empty = true;
+    ready_for_broadcast = true;
+}
 
+void Processor::MemoryUnit::print_state_string()
+{
+     cout << "Memory Unit: ";
+    if (is_empty)
+        cout << "Empty";
+    else 
+        cout << current_operation << " " << current_operand0 << " " << current_operand1;
+    cout << endl;
 }
