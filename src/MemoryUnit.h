@@ -20,7 +20,7 @@ public:
 
     bool is_empty = true;
     void update_current_instruction(RS_entry &rs_entry);
-    int32_t current_operand0, current_operand1;
+    int32_t current_operand0, current_operand1, current_operand2;
     int32_t current_result;
     int rob_dst; 
     OPERATION current_operation;

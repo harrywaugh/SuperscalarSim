@@ -10,19 +10,23 @@ Processor::FetchUnit::FetchUnit()
 void Processor::FetchUnit::update_next_instruction(Processor *processor)  
 {
     if (processor->PC >= processor->instructions.size())  
-        next_instruction = processor->nop_instruction;
-    else
-        next_instruction = processor->instructions.at(processor->PC);
+    {
+        is_empty = true;
+        return;
+    }
+    next_instruction = processor->instructions.at(processor->PC);
     is_empty = false;
 }
 
 void Processor::FetchUnit::update_current_instruction()  
 {
+    if (is_empty)  return;
     current_instruction = next_instruction;
 }
 
 void Processor::FetchUnit::fetch(Processor *processor)
 {
+    if (is_empty)  return;
     switch (processor->string_to_op_map[current_instruction.opcode]) {
         case J:
             processor->return_address_stack.push(current_instruction.PC);

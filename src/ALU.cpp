@@ -91,15 +91,74 @@ void Processor::ALU::completeInstruction(Processor *processor)
 {
     processor->executed_instructions++;
     is_empty = true;
-    ready_for_broadcast = true;
+    for (int r = 0; r < MEM_RES_STATION_SIZE; r++)
+    {
+        RS_entry *rs_entry = &processor->mem_reservation_station[r];
+        if (!rs_entry->is_empty)
+        {
+            if (rs_entry->rob_op0_dependency == rob_dst)
+            {
+                rs_entry->rob_op0_dependency = -1;
+                memcpy(&rs_entry->val0, &current_result, sizeof(int32_t));
+            }
+            if (rs_entry->rob_op1_dependency == rob_dst)
+            {
+                rs_entry->rob_op1_dependency = -1;
+                memcpy(&rs_entry->val1, &current_result, sizeof(int32_t));
+            }
+            if (rs_entry->rob_op2_dependency == rob_dst)
+            {
+                rs_entry->rob_op2_dependency = -1;
+                memcpy(&rs_entry->val2, &current_result, sizeof(int32_t));
+            }
+        }
+    }
+
+    for (int r = 0; r < ALU_RES_STATION_SIZE; r++)
+    {
+        RS_entry *rs_entry = &processor->alu_reservation_station[r];
+        if (!rs_entry->is_empty)
+        {
+            if (rs_entry->rob_op0_dependency == rob_dst)
+            {
+                rs_entry->rob_op0_dependency = -1;
+                memcpy(&rs_entry->val0, &current_result, sizeof(int32_t));
+            }
+            if (rs_entry->rob_op1_dependency == rob_dst)
+            {
+                rs_entry->rob_op1_dependency = -1;
+                memcpy(&rs_entry->val1, &current_result, sizeof(int32_t));
+            }
+        }
+    }
+
+    for (int r = 0; r < BRANCH_RES_STATION_SIZE; r++)
+    {
+        RS_entry *rs_entry = &processor->branch_reservation_station[r];
+        if (!rs_entry->is_empty)
+        {
+            if (rs_entry->rob_op0_dependency == rob_dst)
+            {
+                rs_entry->rob_op0_dependency = -1;
+                memcpy(&rs_entry->val0, &current_result, sizeof(int32_t));
+            }
+            if (rs_entry->rob_op1_dependency == rob_dst)
+            {
+                rs_entry->rob_op1_dependency = -1;
+                memcpy(&rs_entry->val1, &current_result, sizeof(int32_t));
+            }
+        }
+    }
+
+    memcpy(&processor->reorder_buffer[rob_dst].value, &current_result, sizeof(int32_t));
+    processor->reorder_buffer[rob_dst].done = true;
 }
 
 void Processor::ALU::print_state_string()
 {
-    cout << "ALU: ";
+    cout << "  ALU: ";
     if (is_empty)
         cout << "Empty";
     else 
         cout << current_operation << " " << current_operand0 << " " << current_operand1;
-    cout << endl;
 }

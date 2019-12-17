@@ -92,8 +92,10 @@ typedef struct RS_entry {
     int rob_dst;
     int rob_op0_dependency;
     int rob_op1_dependency;
+    int rob_op2_dependency;
     int32_t val0;
     int32_t val1;
+    int32_t val2;
     int32_t instruction_id;
     bool is_empty;
 } RS_entry;

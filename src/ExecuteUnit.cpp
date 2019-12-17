@@ -9,6 +9,11 @@ Processor::ExecuteUnit::ExecuteUnit()
 
 void Processor::ExecuteUnit::update_next_instruction(DecodeUnit &decode_unit)  
 {
+    if (decode_unit.is_empty)
+    {
+        is_empty = true;
+        return;
+    }
     next_instruction = decode_unit.current_instruction;
     is_empty = false;
 }
@@ -16,8 +21,6 @@ void Processor::ExecuteUnit::update_next_instruction(DecodeUnit &decode_unit)
 void Processor::ExecuteUnit::update_current_instruction()  
 {
     current_instruction = next_instruction;
-    if (current_instruction.opcode == "")
-        is_empty = true;
 }
 
 

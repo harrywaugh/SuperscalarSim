@@ -46,17 +46,14 @@ Processor::Processor()
     }
 
     for (int i = 0; i < REORDER_BUFFER_SIZE; i++)  
-    {
-        reorder_buffer[i].done = false;
-        reorder_buffer[i].is_empty = true;
-    }
+        reorder_buffer[i] = ROB_entry {-1, NOP, 0, false, true};
 
     for (int i = 0; i < ALU_RES_STATION_SIZE; i++)  
-        alu_reservation_station[i] = RS_entry {NOP, -1, -1, -1, 0, 0, -1, true};
+        alu_reservation_station[i] = RS_entry {NOP, -1, -1, -1, -1, 0, 0, 0, -1, true};
     for (int i = 0; i < MEM_RES_STATION_SIZE; i++)  
-        mem_reservation_station[i] = RS_entry {NOP, -1, -1, -1, 0, 0, -1, true};
+        mem_reservation_station[i] = RS_entry {NOP, -1, -1, -1, -1, 0, 0, 0, -1, true};
     for (int i = 0; i < BRANCH_RES_STATION_SIZE; i++)  
-        branch_reservation_station[i] = RS_entry {NOP, -1, -1, -1, 0, 0, -1, true};
+        branch_reservation_station[i] = RS_entry {NOP, -1, -1, -1, -1, 0, 0, 0, -1, true};
 }
 
 // Processor Destructor
@@ -140,12 +137,14 @@ void Processor::addInstruction(string line)
 
 void Processor::printRSEntry(RS_entry &rs_entry) 
 {
-    cout << rs_entry.op << " | " << rs_entry.rob_dst 
-                        << " | " << rs_entry.rob_op0_dependency 
-                        << " | " << rs_entry.rob_op1_dependency
-                        << " | " << rs_entry.val0 
-                        << " | " << rs_entry.val1 
-                        << " | " << (rs_entry.is_empty ? "yes" : "no") << endl;
+    cout << setw(5) << right << rs_entry.op  << " | " << setw(9) << right << rs_entry.rob_dst 
+                                                << " | " << setw(6) << right << rs_entry.rob_op0_dependency 
+                                                << " | " << setw(6) << right << rs_entry.rob_op1_dependency
+                                                << " | " << setw(6) << right << rs_entry.rob_op2_dependency
+                                                << " | " << setw(6) << right << rs_entry.val0 
+                                                << " | " << setw(6) << right << rs_entry.val1 
+                                                << " | " << setw(6) << right << rs_entry.val2 
+                                                << " | " << setw(5) << right << (rs_entry.is_empty ? "yes" : "no") << endl;
 }
 
 // Function takes in string and parses function name, and then creates pointer to the first instruction 
@@ -249,19 +248,20 @@ void Processor::run_program()
 
         #ifdef PIPELINED
             #ifdef SUPERSCALAR
-                update_instructions();
+                // update_instructions();
+                decode_unit->update_next_instruction(*fetch_unit);
+                decode_unit->update_current_instruction();
+                fetch_unit->update_next_instruction(this);
+                fetch_unit->update_current_instruction();
+                incrementPC();
 
                 #ifdef DEBUG
                     debug_processor();
                     getchar();
                 #endif
 
-                
                 commit();
                 // cout << "PASSED commit" << endl;
-
-                broadcast();
-                // cout << "PASSED broadcast" << endl;
 
                 for (int u = 0; u < BRANCH_UNITS; u++)
                     branch_units.at(u).execute(this);
@@ -272,6 +272,7 @@ void Processor::run_program()
                 for (int u = 0; u < ALU_UNITS; u++)
                     alu_units.at(u).execute(this);
                 // cout << "PASSED ALU" << endl;
+
 
                 dispatch();
                 // cout << "PASSED dispatch" << endl;
@@ -291,16 +292,29 @@ void Processor::run_program()
                 refresh_flag = false;
 
             #else
-                update_instructions();
+                // update_instructions();
+                execute_units.at(0).update_next_instruction(*decode_unit);
+                execute_units.at(0).update_current_instruction();
+                decode_unit->update_next_instruction(*fetch_unit);
+                decode_unit->update_current_instruction();
+                fetch_unit->update_next_instruction(this);
+                fetch_unit->update_current_instruction();
+                incrementPC();
 
                 #ifdef DEBUG
                     debug_processor();
                     getchar();
                 #endif
 
+                
+
                 fetch_unit->fetch(this);
+                // cout << "PASSED FETCH" << endl;
                 decode_unit->decode(this);
+                // cout << "PASSED DECODE" << endl;
                 execute_units.at(0).execute(this);
+                // cout << "PASSED EXECUTE" << endl;
+
 
                 incrementCycles();
                 refresh_flag = false;
@@ -317,31 +331,33 @@ void Processor::run_program()
 
             fetch_unit->fetch(this);
             incrementCycles();
-            fetch_unit->is_empty = true;
 
             // cout << "REACHED DECODE" << endl;
 
             decode_unit->update_next_instruction(*fetch_unit);
             decode_unit->update_current_instruction();
+            fetch_unit->is_empty = true;
             #ifdef DEBUG
                 debug_processor();
                 getchar();
             #endif
             decode_unit->decode(this);
             incrementCycles();
-            decode_unit->is_empty = true;
 
             // cout << "REACHED EXECUTE" << endl;
 
             execute_units.at(0).update_next_instruction(*decode_unit);
             execute_units.at(0).update_current_instruction();
+            decode_unit->is_empty = true;
+
             #ifdef DEBUG
                 debug_processor();
                 getchar();
             #endif
             execute_units.at(0).execute(this);
-            incrementCycles();
             execute_units.at(0).is_empty = true;
+
+            incrementCycles();
 
         #endif 
     }
@@ -377,8 +393,6 @@ void Processor::run_program()
 
 void Processor::update_instructions()  
 {
-
-
     fetch_unit->update_next_instruction(this);
     incrementPC();
     decode_unit->update_next_instruction(*fetch_unit);
@@ -430,7 +444,7 @@ void Processor::issue()
                     
                     switch (string_to_op_map[instruction_queue.front().opcode]) 
                     {
-                        case J: case RETURN: case EXIT:
+                        case J: case RETURN:
                             // int32_t tmp;
                             // branch_reservation_station[i].rat_op0_dependency = register_map.at(instruction_queue.front().operand1);
                             // if(register_alias_table[branch_reservation_station[i].rat_op0_dependency] == -1)
@@ -447,7 +461,37 @@ void Processor::issue()
                             break;
                         case BEQ: case BLT:
                             reorder_buffer[ROB_issue_pointer] = ROB_entry {
-                                register_map.at(instruction_queue.front().operand2), // Pointer to dst register
+                                // instruction_queue.front().PC + stoi(instruction_queue.front().operand2), // BRANCH LOC IF TAKEN
+                                instruction_queue.front().PC + 1, // BRANCH LOC IF NOT TAKEN
+                                string_to_op_map[instruction_queue.front().opcode],
+                                0, 
+                                false, // Marks entry as done
+                                false // Marks entry as not empty
+                            };
+                            branch_reservation_station[i].op = string_to_op_map.at(instruction_queue.front().opcode);
+                            branch_reservation_station[i].rob_dst = ROB_issue_pointer;
+                            branch_reservation_station[i].rob_op0_dependency = register_alias_table[register_map.at(instruction_queue.front().operand0)];
+                            branch_reservation_station[i].rob_op1_dependency = register_alias_table[register_map.at(instruction_queue.front().operand1)];
+                            if(branch_reservation_station[i].rob_op0_dependency == -1)
+                                memcpy(&branch_reservation_station[i].val0, &register_file[register_map.at(instruction_queue.front().operand0)], sizeof(int32_t));
+                            if(branch_reservation_station[i].rob_op1_dependency == -1)
+                                memcpy(&branch_reservation_station[i].val1, &register_file[register_map.at(instruction_queue.front().operand1)], sizeof(int32_t));
+                            // branch_reservation_station[i].instruction_id = instruction_queue.front().PC;
+                            if (branch_reservation_station[i].rob_op0_dependency != -1 && reorder_buffer[branch_reservation_station[i].rob_op0_dependency].done)
+                            {
+                                memcpy(&branch_reservation_station[i].val0, &reorder_buffer[branch_reservation_station[i].rob_op0_dependency].value, sizeof(int32_t));
+                                branch_reservation_station[i].rob_op0_dependency = -1;
+                            }
+                            if (branch_reservation_station[i].rob_op1_dependency != -1 && reorder_buffer[branch_reservation_station[i].rob_op1_dependency].done)
+                            {
+                                memcpy(&branch_reservation_station[i].val1, &reorder_buffer[branch_reservation_station[i].rob_op1_dependency].value, sizeof(int32_t));
+                                branch_reservation_station[i].rob_op1_dependency = -1;
+                            }
+                            // register_alias_table[register_map.at(instruction_queue.front().operand0)] = ROB_issue_pointer;
+                            break;
+                        case EXIT:
+                            reorder_buffer[ROB_issue_pointer] = ROB_entry {
+                                31, // Pointer to dst register
                                 string_to_op_map[instruction_queue.front().opcode],
                                 0, // Value - not ready so just placeholder
                                 false, // Marks entry as done
@@ -455,14 +499,6 @@ void Processor::issue()
                             };
                             branch_reservation_station[i].op = string_to_op_map.at(instruction_queue.front().opcode);
                             branch_reservation_station[i].rob_dst = ROB_issue_pointer;
-                            branch_reservation_station[i].rob_op0_dependency = register_alias_table[register_map.at(instruction_queue.front().operand1)];
-                            branch_reservation_station[i].rob_op1_dependency = register_alias_table[register_map.at(instruction_queue.front().operand2)];
-                            if(branch_reservation_station[i].rob_op0_dependency == -1)
-                                memcpy(&branch_reservation_station[i].val0, &register_file[register_map.at(instruction_queue.front().operand1)], sizeof(int32_t));
-                            if(branch_reservation_station[i].rob_op1_dependency == -1)
-                                memcpy(&branch_reservation_station[i].val1, &register_file[register_map.at(instruction_queue.front().operand2)], sizeof(int32_t));
-                            branch_reservation_station[i].instruction_id = instruction_queue.front().PC;
-                            register_alias_table[register_map.at(instruction_queue.front().operand0)] = ROB_issue_pointer;
                             break;
                         default:
                             break;
@@ -492,12 +528,60 @@ void Processor::issue()
                     {
                         case LA:
                             mem_reservation_station[i].val0 = var_map.at(instruction_queue.front().operand1);
+                            register_alias_table[register_map.at(instruction_queue.front().operand0)] = ROB_issue_pointer;
                             break;
-                        case LI: case LI_F: case MV:
-                            int32_t tmp;
+                        case MV:
                             mem_reservation_station[i].rob_op0_dependency = register_alias_table[register_map.at(instruction_queue.front().operand1)];
                             if(mem_reservation_station[i].rob_op0_dependency == -1)
                                 memcpy(&mem_reservation_station[i].val0, &register_file[register_map.at(instruction_queue.front().operand1)], sizeof(int32_t));
+                            if (mem_reservation_station[i].rob_op0_dependency != -1 && reorder_buffer[mem_reservation_station[i].rob_op0_dependency].done)
+                            {
+                                memcpy(&mem_reservation_station[i].val0, &reorder_buffer[mem_reservation_station[i].rob_op0_dependency].value, sizeof(int32_t));
+                                mem_reservation_station[i].rob_op0_dependency = -1;
+                            }
+                            register_alias_table[register_map.at(instruction_queue.front().operand0)] = ROB_issue_pointer;
+                            break;
+                        case LI:
+                        {
+                            int itmp2 = stoi(instruction_queue.front().operand1);
+                            memcpy(&mem_reservation_station[i].val0, &itmp2, sizeof(int32_t));
+                            register_alias_table[register_map.at(instruction_queue.front().operand0)] = ROB_issue_pointer;
+                            break;
+                        }
+                        case LI_F:
+                        {
+                            float ftmp2 = stof(instruction_queue.front().operand1);
+                            memcpy(&mem_reservation_station[i].val0, &ftmp2, sizeof(float));
+                            register_alias_table[register_map.at(instruction_queue.front().operand0)] = ROB_issue_pointer;
+                            break;
+                        }
+                        case SW: case SW_F:
+                            reorder_buffer[ROB_issue_pointer].value = -1;
+                            reorder_buffer[ROB_issue_pointer].p_register_dst = -1;
+                            mem_reservation_station[i].rob_op0_dependency = register_alias_table[register_map.at(instruction_queue.front().operand0)];
+                            mem_reservation_station[i].rob_op1_dependency = register_alias_table[register_map.at(instruction_queue.front().operand1)];
+                            mem_reservation_station[i].rob_op2_dependency = register_alias_table[register_map.at(instruction_queue.front().operand2)];
+                            if(mem_reservation_station[i].rob_op0_dependency == -1)
+                                memcpy(&mem_reservation_station[i].val0, &register_file[register_map.at(instruction_queue.front().operand0)], sizeof(int32_t));
+                            if(mem_reservation_station[i].rob_op1_dependency == -1)
+                                memcpy(&mem_reservation_station[i].val1, &register_file[register_map.at(instruction_queue.front().operand1)], sizeof(int32_t));
+                            if(mem_reservation_station[i].rob_op2_dependency == -1)
+                                memcpy(&mem_reservation_station[i].val2, &register_file[register_map.at(instruction_queue.front().operand2)], sizeof(int32_t));
+                            if (mem_reservation_station[i].rob_op0_dependency != -1 && reorder_buffer[mem_reservation_station[i].rob_op0_dependency].done)
+                            {
+                                memcpy(&mem_reservation_station[i].val0, &reorder_buffer[mem_reservation_station[i].rob_op0_dependency].value, sizeof(int32_t));
+                                mem_reservation_station[i].rob_op0_dependency = -1;
+                            }
+                            if (mem_reservation_station[i].rob_op1_dependency != -1 && reorder_buffer[mem_reservation_station[i].rob_op1_dependency].done)
+                            {
+                                memcpy(&mem_reservation_station[i].val1, &reorder_buffer[mem_reservation_station[i].rob_op1_dependency].value, sizeof(int32_t));
+                                mem_reservation_station[i].rob_op1_dependency = -1;
+                            }
+                            if (mem_reservation_station[i].rob_op2_dependency != -1 && reorder_buffer[mem_reservation_station[i].rob_op2_dependency].done)
+                            {
+                                memcpy(&mem_reservation_station[i].val2, &reorder_buffer[mem_reservation_station[i].rob_op2_dependency].value, sizeof(int32_t));
+                                mem_reservation_station[i].rob_op2_dependency = -1;
+                            }
                             break;
                         default:
                             mem_reservation_station[i].rob_op0_dependency = register_alias_table[register_map.at(instruction_queue.front().operand1)];
@@ -506,10 +590,20 @@ void Processor::issue()
                                 memcpy(&mem_reservation_station[i].val0, &register_file[register_map.at(instruction_queue.front().operand1)], sizeof(int32_t));
                             if(mem_reservation_station[i].rob_op1_dependency == -1)
                                 memcpy(&mem_reservation_station[i].val1, &register_file[register_map.at(instruction_queue.front().operand2)], sizeof(int32_t));
+                            register_alias_table[register_map.at(instruction_queue.front().operand0)] = ROB_issue_pointer;
+                            if (mem_reservation_station[i].rob_op0_dependency != -1 && reorder_buffer[mem_reservation_station[i].rob_op0_dependency].done)
+                            {
+                                memcpy(&mem_reservation_station[i].val0, &reorder_buffer[mem_reservation_station[i].rob_op0_dependency].value, sizeof(int32_t));
+                                mem_reservation_station[i].rob_op0_dependency = -1;
+                            }
+                            if (mem_reservation_station[i].rob_op1_dependency != -1 && reorder_buffer[mem_reservation_station[i].rob_op1_dependency].done)
+                            {
+                                memcpy(&mem_reservation_station[i].val1, &reorder_buffer[mem_reservation_station[i].rob_op1_dependency].value, sizeof(int32_t));
+                                mem_reservation_station[i].rob_op1_dependency = -1;
+                            }
                             break;
                     }
                     mem_reservation_station[i].is_empty = false; 
-                    register_alias_table[register_map.at(instruction_queue.front().operand0)] = ROB_issue_pointer;
                     incrementROBIssue();
                     instruction_queue.erase(instruction_queue.begin());
                     break;
@@ -540,6 +634,11 @@ void Processor::issue()
                             alu_reservation_station[i].rob_op0_dependency = register_alias_table[register_map.at(instruction_queue.front().operand1)];
                             if(alu_reservation_station[i].rob_op0_dependency == -1)
                                 memcpy(&alu_reservation_station[i].val0, &register_file[register_map.at(instruction_queue.front().operand1)], sizeof(int32_t));
+                            if (alu_reservation_station[i].rob_op0_dependency != -1 && reorder_buffer[alu_reservation_station[i].rob_op0_dependency].done)
+                            {
+                                memcpy(&alu_reservation_station[i].val0, &reorder_buffer[alu_reservation_station[i].rob_op0_dependency].value, sizeof(int32_t));
+                                alu_reservation_station[i].rob_op0_dependency = -1;
+                            }
                             itmp = stoi(instruction_queue.front().operand2);
                             memcpy(&alu_reservation_station[i].val1, &itmp, sizeof(int32_t));
                             break;
@@ -548,6 +647,11 @@ void Processor::issue()
                             alu_reservation_station[i].rob_op0_dependency = register_alias_table[register_map.at(instruction_queue.front().operand1)];
                             if(alu_reservation_station[i].rob_op0_dependency == -1)
                                 memcpy(&alu_reservation_station[i].val0, &register_file[register_map.at(instruction_queue.front().operand1)], sizeof(int32_t));
+                            if (alu_reservation_station[i].rob_op0_dependency != -1 && reorder_buffer[alu_reservation_station[i].rob_op0_dependency].done)
+                            {
+                                memcpy(&alu_reservation_station[i].val0, &reorder_buffer[alu_reservation_station[i].rob_op0_dependency].value, sizeof(int32_t));
+                                alu_reservation_station[i].rob_op0_dependency = -1;
+                            }
                             ftmp = stof(instruction_queue.front().operand2);
                             memcpy(&alu_reservation_station[i].val1, &ftmp, sizeof(float));
                             break;
@@ -558,6 +662,16 @@ void Processor::issue()
                                 memcpy(&alu_reservation_station[i].val0, &register_file[register_map.at(instruction_queue.front().operand1)], sizeof(int32_t));
                             if(alu_reservation_station[i].rob_op1_dependency == -1)
                                 memcpy(&alu_reservation_station[i].val1, &register_file[register_map.at(instruction_queue.front().operand2)], sizeof(int32_t));
+                            if (alu_reservation_station[i].rob_op0_dependency != -1 && reorder_buffer[alu_reservation_station[i].rob_op0_dependency].done)
+                            {
+                                memcpy(&alu_reservation_station[i].val0, &reorder_buffer[alu_reservation_station[i].rob_op0_dependency].value, sizeof(int32_t));
+                                alu_reservation_station[i].rob_op0_dependency = -1;
+                            }
+                            if (alu_reservation_station[i].rob_op1_dependency != -1 && reorder_buffer[alu_reservation_station[i].rob_op1_dependency].done)
+                            {
+                                memcpy(&alu_reservation_station[i].val1, &reorder_buffer[alu_reservation_station[i].rob_op1_dependency].value, sizeof(int32_t));
+                                alu_reservation_station[i].rob_op1_dependency = -1;
+                            }
                             break;
                     }
                     alu_reservation_station[i].is_empty = false; 
@@ -584,7 +698,7 @@ void Processor::dispatch()
                 if (!rs_entry->is_empty && rs_entry->rob_op0_dependency == -1 && rs_entry->rob_op1_dependency == -1 )
                 {
                     branch_units.at(i).update_current_instruction(*rs_entry);
-                    rs_entry->is_empty = true;
+                    branch_reservation_station[r] = RS_entry {NOP, -1, -1, -1, -1, 0, 0, 0, -1, true};
                     break;
                 }
             }
@@ -598,10 +712,10 @@ void Processor::dispatch()
             for (int r = 0; r < MEM_RES_STATION_SIZE; r++)
             {
                 RS_entry *rs_entry = &mem_reservation_station[r];
-                if (!rs_entry->is_empty && rs_entry->rob_op0_dependency == -1 && rs_entry->rob_op1_dependency == -1 )
+                if (!rs_entry->is_empty && rs_entry->rob_op0_dependency == -1 && rs_entry->rob_op1_dependency == -1 && rs_entry->rob_op2_dependency == -1)
                 {
                     mem_units.at(i).update_current_instruction(*rs_entry);
-                    rs_entry->is_empty = true;
+                    mem_reservation_station[r] = RS_entry {NOP, -1, -1, -1, -1, 0, 0, 0, -1, true};
                     break;
                 }
             }
@@ -618,94 +732,13 @@ void Processor::dispatch()
                 if (!rs_entry->is_empty && rs_entry->rob_op0_dependency == -1 && rs_entry->rob_op1_dependency == -1 )
                 {
                     alu_units.at(i).update_current_instruction(*rs_entry);
-                    rs_entry->is_empty = true;
+                    alu_reservation_station[r] = RS_entry {NOP, -1, -1, -1, -1, 0, 0, 0, -1, true};
                     break;
                 }
             }
         }
     }
 
-}
-
-void Processor::broadcast()
-{
-    for (int i = 0; i < BRANCH_UNITS; i++)
-    {
-        if (branch_units.at(i).ready_for_broadcast)
-        {
-            for (int r = 0; r < BRANCH_RES_STATION_SIZE; r++)
-            {
-                RS_entry *rs_entry = &mem_reservation_station[r];
-                if (!rs_entry->is_empty)
-                {
-                    if (rs_entry->rob_op0_dependency == branch_units.at(i).rob_dst)
-                    {
-                        rs_entry->rob_op0_dependency = -1;
-                        memcpy(&rs_entry->val0, &branch_units.at(i).current_result, sizeof(int32_t));
-                    }
-                    if (rs_entry->rob_op1_dependency == branch_units.at(i).rob_dst)
-                    {
-                        rs_entry->rob_op1_dependency = -1;
-                        memcpy(&rs_entry->val1, &branch_units.at(i).current_result, sizeof(int32_t));
-                    }
-                    memcpy(&reorder_buffer[branch_units.at(i).rob_dst].value, &branch_units.at(i).current_result, sizeof(int32_t));
-                    reorder_buffer[branch_units.at(i).rob_dst].done = true;
-                }
-            }
-        }
-    }
-
-    for (int i = 0; i < MEM_UNITS; i++)
-    {
-        if (mem_units.at(i).ready_for_broadcast)
-        {
-            for (int r = 0; r < MEM_RES_STATION_SIZE; r++)
-            {
-                RS_entry *rs_entry = &mem_reservation_station[r];
-                if (!rs_entry->is_empty)
-                {
-                    if (rs_entry->rob_op0_dependency == mem_units.at(i).rob_dst)
-                    {
-                        rs_entry->rob_op0_dependency = -1;
-                        memcpy(&rs_entry->val0, &mem_units.at(i).current_result, sizeof(int32_t));
-                    }
-                    if (rs_entry->rob_op1_dependency == mem_units.at(i).rob_dst)
-                    {
-                        rs_entry->rob_op1_dependency = -1;
-                        memcpy(&rs_entry->val1, &mem_units.at(i).current_result, sizeof(int32_t));
-                    }
-                    memcpy(&reorder_buffer[mem_units.at(i).rob_dst].value, &mem_units.at(i).current_result, sizeof(int32_t));
-                    reorder_buffer[mem_units.at(i).rob_dst].done = true;
-                }
-            }
-        }
-    }
-
-    for (int i = 0; i < ALU_UNITS; i++)
-    {
-        if (alu_units.at(i).ready_for_broadcast)
-        {
-            for (int r = 0; r < ALU_RES_STATION_SIZE; r++)
-            {
-                RS_entry *rs_entry = &mem_reservation_station[r];
-                if (!rs_entry->is_empty)
-                {
-                    if (rs_entry->rob_op0_dependency == alu_units.at(i).rob_dst)
-                    {
-                        rs_entry->rob_op0_dependency = -1;
-                        memcpy(&rs_entry->val0, &alu_units.at(i).current_result, sizeof(int32_t));
-                    }
-                    if (rs_entry->rob_op1_dependency == alu_units.at(i).rob_dst)
-                    {
-                        rs_entry->rob_op1_dependency = -1;
-                        memcpy(&rs_entry->val1, &alu_units.at(i).current_result, sizeof(int32_t));
-                    }
-                    memcpy(&reorder_buffer[alu_units.at(i).rob_dst].value, &alu_units.at(i).current_result, sizeof(int32_t));
-                    reorder_buffer[alu_units.at(i).rob_dst].done = true;
-                }
-            }
-        }
-    }
 }
 
 void Processor::commit()
@@ -716,16 +749,44 @@ void Processor::commit()
         {
             switch (reorder_buffer[ROB_commit_pointer].op)
             {
-                case BEQ: case BLT: case EXIT: case J: case NOP: case RETURN:
+                case J: case NOP: case RETURN:
                     // REFRESH PIPELINE?? EXIT??
                     break;
+                case BEQ: case BLT:
+                    if (reorder_buffer[ROB_commit_pointer].value == 0)
+                    {
+                        for (int r = 0; r < 64; r++)
+                            register_alias_table[r] = -1;
+                        for (int r=ROB_commit_pointer+1; r < ROB_issue_pointer; r++)
+                            reorder_buffer[r] = ROB_entry {-1, NOP, 0, false, true};
+                        ROB_issue_pointer = ROB_commit_pointer + 1;
+                        PC = reorder_buffer[ROB_commit_pointer].p_register_dst;
+                        fetch_unit->is_empty = true;
+                        decode_unit->is_empty = true;
+                        for (int u = 0; u < ALU_UNITS; u++)
+                            alu_units.at(u).is_empty = true;
+                        for (int u = 0; u < BRANCH_UNITS; u++)
+                            branch_units.at(u).is_empty = true;
+                        for (int u = 0; u < MEM_UNITS; u++)
+                            mem_units.at(u).is_empty = true;
+                        instruction_queue.clear();
+                        for (int r = 0; r < ALU_UNITS; r++)
+                            alu_reservation_station[r] = RS_entry {NOP, -1, -1, -1, -1, 0, 0, 0, -1, true};
+                        for (int r = 0; r < BRANCH_UNITS; r++)
+                            branch_reservation_station[r] = RS_entry {NOP, -1, -1, -1, -1, 0, 0, 0, -1, true};
+                        for (int r = 0; r < MEM_RES_STATION_SIZE; r++)
+                            mem_reservation_station[r] = RS_entry {NOP, -1, -1, -1, -1, 0, 0, 0, -1, true};
+                    }
+                    break;
+                case SW_F: case SW:
+                    // Do nothing, no destination register
                 default:
                     register_file[reorder_buffer[ROB_commit_pointer].p_register_dst] = reorder_buffer[ROB_commit_pointer].value;
                     if (register_alias_table[reorder_buffer[ROB_commit_pointer].p_register_dst] == ROB_commit_pointer)
                         register_alias_table[reorder_buffer[ROB_commit_pointer].p_register_dst] = -1;
                     break;
             }
-            ROB_commit_pointer++;
+            incrementROBCommit();
         }
     }
 }
@@ -783,6 +844,9 @@ void Processor::debug_processor()
     map<string, int>::iterator it;
     map<string, uint32_t>::iterator it1;
 
+    for (int i = 0; i < 10; i++)
+        cout << endl << endl;
+
     cout << "\n\n###################" << endl;
     cout << "PROCESSOR DEBUG LOG: Total Cycles = " << cycles << endl;
     cout << "###################" << endl;
@@ -794,15 +858,15 @@ void Processor::debug_processor()
         cout << it->first << " -> " << it->second << endl;
     }
 
-    cout << "\nArrays and Variables : " << endl;
+    cout << "Arrays and Variables : " << endl;
 
     for (it = var_map.begin(); it != var_map.end(); it++)
     {
-        cout << it->first << " -> &Mem + " << it->second << " ";
+        cout << it->first << " -> &Mem + " << it->second << "; ";
     }
     cout << endl;
 
-    cout << "\nInstructions : " << PC << endl;
+    cout << "\nInstructions : " << endl;
 
     for (int i = PC-1; i < min(PC+4, (int)instructions.size()) && i > -1; i++)  {
         if(fn_map_reverse.count(i) > 0)  
@@ -813,20 +877,15 @@ void Processor::debug_processor()
             cout << "  <- PC";
         cout << endl;
     }
-    cout << endl;
 
-    cout << "\nRegister Values : " << endl;
+    cout << "\nRegister Values | FP Register Values : " << endl;
+    float tmp;
     for (int j = 0; j < 4; j++)  {
         for (int i = 0; i < 8; i++)  {
             if (j*8+i < 10)  cout << " ";
             cout << j*8+i << ": " << register_file[j*8+i] << " ";
         }
-        cout << endl;
-    }
-
-    cout << "\nFP Register Values :" << endl;
-    float tmp;
-    for (int j = 0; j < 4; j++)  {
+        cout << "  |  ";
         for (int i = 0; i < 8; i++)  {
             if (j*8+i < 10)  cout << " ";
             memcpy(&tmp, &register_file[j*8+i+32], sizeof(float));
@@ -834,27 +893,40 @@ void Processor::debug_processor()
         }
         cout << endl;
     }
+    
 
     #ifdef SUPERSCALAR
+        cout << "\nFetch Unit: " << (fetch_unit->is_empty   ? "Empty"  : fetch_unit->current_instruction.to_string())  << endl;
+        cout << "Decode Unit: " << (decode_unit->is_empty  ? "Empty"  : decode_unit->current_instruction.to_string())  << endl;
         cout << "\nInstruction Queue (Front 5 elements only): " << endl;
         for (int i = 0; i < min(5, (int)instruction_queue.size()); i++)
             cout << i << ". " << instruction_queue.at(i).to_string() << endl; 
 
-        cout << "\nALU Reservation Station: " << endl;
-        cout << "OP | ROB_DST | ROB0 | ROB1 | VAL0 | VAL1 | EMPTY " << endl;
+        cout << "\nALU Reservation Station: \t\t\t\t\t\t\t      =====> ";
+        for (int i = 0; i < ALU_UNITS; i++)
+            alu_units.at(i).print_state_string();
+        cout << endl;
+        cout << "  OP  |  ROB_DST  |  ROB0  |  ROB1  |  ROB2  |  VAL0  |  VAL1  |  VAL2  |  EMPTY " << endl;
+
         for (int i = 0; i < ALU_RES_STATION_SIZE; i++)
             if(!alu_reservation_station[i].is_empty)
                 printRSEntry(alu_reservation_station[i]);
 
-        cout << "\nBranch Reservation Station: " << endl;
-        cout << "OP | ROB_DST | ROB0 | ROB1 | VAL0 | VAL1 | EMPTY " << endl;
+        cout << "\nBranch Reservation Station: \t\t\t\t\t\t\t      =====> ";
+        for (int i = 0; i < BRANCH_UNITS; i++)
+            branch_units.at(i).print_state_string();
+        cout << endl;
+        cout << "  OP  |  ROB_DST  |  ROB0  |  ROB1  |  ROB2  |  VAL0  |  VAL1  |  VAL2  |  EMPTY " << endl;
 
         for (int i = 0; i < BRANCH_RES_STATION_SIZE; i++)
             if(!branch_reservation_station[i].is_empty)
                 printRSEntry(branch_reservation_station[i]);
 
-        cout << "\nLoad/Store Reservation Station: " << endl;
-        cout << "OP | ROB_DST | ROB0 | ROB1 | VAL0 | VAL1 | EMPTY " << endl;
+        cout << "\nMemory Reservation Station: \t\t\t\t\t\t\t      =====> ";
+        for (int i = 0; i < MEM_UNITS; i++)
+            mem_units.at(i).print_state_string();
+        cout << endl;
+        cout << "  OP  |  ROB_DST  |  ROB0  |  ROB1  |  ROB2  |  VAL0  |  VAL1  |  VAL2  |  EMPTY " << endl;
 
         for (int i = 0; i < MEM_RES_STATION_SIZE; i++)
             if(!mem_reservation_station[i].is_empty)
@@ -862,32 +934,34 @@ void Processor::debug_processor()
 
     #endif
 
-    // cout << "\nMain Memory : \n" << endl;
+    cout << "\nMain Memory : \n" << endl;
 
-    // for (int j = 0; j < 10; j++)  {
-    //     for (int i = 0; i < 10; i++)  {
-    //         if (j*10+i < 10)  cout << " ";
-    //         cout << j * 10 + i << ": " << main_memory[j * 10 + i] << " ";
-    //     }
-    //     cout << endl;
-    // }
+    for (int j = 0; j < 2; j++)  {
+        for (int i = 0; i < 20; i++)  {
+            if (j*10+i < 10)  cout << " ";
+            cout << j * 10 + i << ": " << main_memory[j * 10 + i] << " ";
+        }
+        cout << endl;
+    }
 
-    cout << endl << endl;
-    cout << "Fetch Unit: " << (fetch_unit->is_empty   ? "Empty"  : fetch_unit->current_instruction.to_string())  << endl;
-    cout << "Decode Unit: " << (decode_unit->is_empty  ? "Empty"  : decode_unit->current_instruction.to_string())  << endl;
     
     #ifdef SUPERSCALAR
-        for (int i = 0; i < BRANCH_UNITS; i++)
-            branch_units.at(i).print_state_string();
-        for (int i = 0; i < MEM_UNITS; i++)
-            mem_units.at(i).print_state_string();
-        for (int i = 0; i < ALU_UNITS; i++)
-            alu_units.at(i).print_state_string();
+        cout << "\nReorder Buffer" << endl;
+        cout << "ENTRY  |  OP  |  Reg Dest  |  VAL  |  DONE " << endl;
+        for (int i = ROB_commit_pointer; i < ROB_issue_pointer; i = (i+1+REORDER_BUFFER_SIZE) % REORDER_BUFFER_SIZE)
+        {
+            cout << setw(6) << right << i << " | " << setw(4) << right  << reorder_buffer[i].op
+                      << " | " << setw(10) << right  << reorder_buffer[i].p_register_dst
+                      << " | " << setw(5) << right  << reorder_buffer[i].value
+                      << " | " << setw(3) << right  << reorder_buffer[i].done << endl;
+                       
+        }
     #else
+        cout << "\nFetch Unit: "  << (fetch_unit->is_empty  ? "Empty"  : fetch_unit->current_instruction.to_string())  << endl;
         cout << "Decode Unit: "  << (decode_unit->is_empty  ? "Empty"  : decode_unit->current_instruction.to_string())  << endl;
         cout << "Execute Unit: " << (execute_units.at(0).is_empty ? "Empty"  : execute_units.at(0).current_instruction.to_string()) << endl;
     #endif
-    cout << endl << endl;
+    
 }
 
 // Routine to output the image in pgm grayscale binary image format

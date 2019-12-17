@@ -38,33 +38,35 @@ void Processor::BranchUnit::execute(Processor *processor)
 
     switch (current_operation) {
         case EXIT:
-            processor->register_file[31] = -1;
+            current_result = -1;
             break;
         case BEQ:
-            if (current_operand0 != current_operand1)
-            {
-                processor->PC = processor->branch_record.front() + 1;
-                processor->refresh_pipeline();
-                while (!processor->branch_record.empty())
-                    processor->branch_record.pop();
-            }
-            else
-            {
-                processor->branch_record.pop();
-            }
+            // if (current_operand0 != current_operand1)
+            // {
+            //     processor->PC = processor->branch_record.front() + 1;
+            //     processor->refresh_pipeline();
+            //     while (!processor->branch_record.empty())
+            //         processor->branch_record.pop();
+            // }
+            // else
+            // {
+            //     processor->branch_record.pop();
+            // }
+            current_result = (current_operand0 == current_operand1) ? 1 : 0;
             break;
         case BLT:
-            if (current_operand0 >= current_operand1)
-            {
-                processor->PC = processor->branch_record.front() + 1;
-                processor->refresh_pipeline();
-                while (!processor->branch_record.empty())
-                    processor->branch_record.pop();
-            }
-            else
-            {
-                processor->branch_record.pop();
-            }
+            // if (current_operand0 >= current_operand1)
+            // {
+            //     processor->PC = processor->branch_record.front() + 1;
+            //     processor->refresh_pipeline();
+            //     while (!processor->branch_record.empty())
+            //         processor->branch_record.pop();
+            // }
+            // else
+            // {
+            //     processor->branch_record.pop();
+            // }
+            current_result = (current_operand0 < current_operand1) ? 1 : 0;
             break;
     }
     completeInstruction(processor);
@@ -75,14 +77,16 @@ void Processor::BranchUnit::completeInstruction(Processor *processor)
     processor->executed_instructions++;
     is_empty = true;
     ready_for_broadcast = true;
+
+    memcpy(&processor->reorder_buffer[rob_dst].value, &current_result, sizeof(int32_t));
+    processor->reorder_buffer[rob_dst].done = true;
 }
 
 void Processor::BranchUnit::print_state_string()
 {
-    cout << "Branch Unit: ";
+    cout << "  Branch Unit: ";
     if (is_empty)
         cout << "Empty";
     else 
         cout << current_operation << " " << current_operand0 << " " << current_operand1;
-    cout << endl;
 }
