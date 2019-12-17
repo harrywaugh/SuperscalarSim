@@ -24,18 +24,41 @@ void Processor::FetchUnit::update_current_instruction()
     current_instruction = next_instruction;
 }
 
+void Processor::FetchUnit::get_instructions(Processor *processor)
+{
+    instructions.clear();
+    int counter = 0;
+    while ((processor->PC < processor->instructions.size() )&& (counter < FETCH_INSTR_PER_CYCLE))
+    {
+        switch (processor->string_to_op_map[processor->instructions.at(processor->PC).opcode]) {
+            case J:
+                processor->PC = processor->fn_map.at(processor->instructions.at(processor->PC).operand0)-1;
+                break;
+            case BEQ:
+                instructions.push_back(processor->instructions.at(processor->PC));
+                processor->PC += stoi(processor->instructions.at(processor->PC).operand2)-1;
+                break;
+            case BLT:
+                instructions.push_back(processor->instructions.at(processor->PC));
+                processor->PC += stoi(processor->instructions.at(processor->PC).operand2)-1;
+                break;
+            default:
+                instructions.push_back(processor->instructions.at(processor->PC));
+                break;
+        }
+        processor->incrementPC();
+        counter++;
+    }
+}
+
 void Processor::FetchUnit::fetch(Processor *processor)
 {
+    
     if (is_empty)  return;
+
     switch (processor->string_to_op_map[current_instruction.opcode]) {
         case J:
-            processor->return_address_stack.push(current_instruction.PC);
             processor->PC = processor->fn_map.at(current_instruction.operand0);
-            break;
-        case RETURN:
-            processor->PC = processor->return_address_stack.top()+1;
-            processor->return_address_stack.pop();
-            // Suspected bug here
             break;
         case BEQ:
             #ifdef PIPELINED 
@@ -52,5 +75,8 @@ void Processor::FetchUnit::fetch(Processor *processor)
         default:
             break;
     }
+
+
+    
     return;
 }

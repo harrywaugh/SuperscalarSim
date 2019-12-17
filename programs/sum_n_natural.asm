@@ -1,7 +1,7 @@
 main:
 	li $t0, 1
 	li $t1, 0
-	li $t2, 10
+	li $t2, 1000
 	j for
 for:
 	add $t1, $t1, $t0
