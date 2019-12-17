@@ -27,7 +27,7 @@
 #endif
 
 #define COMMIT_INSTR_PER_CYCLE 6
-#define ISSUE_INSTR_PER_CYCLE 2
+#define ISSUE_INSTR_PER_CYCLE 6
 
 #define EXECUTE_UNITS 1
 #define MEM_UNITS 1

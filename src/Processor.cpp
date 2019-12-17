@@ -779,8 +779,17 @@ void Processor::commit()
                     {
                         for (int r = 0; r < 64; r++)
                             register_alias_table[r] = -1;
-                        for (int r=ROB_commit_pointer+1; r < ROB_issue_pointer; r++)
-                            reorder_buffer[r] = ROB_entry {-1, NOP, 0, false, true};
+                        // for (int r=ROB_commit_pointer+1; r < ROB_issue_pointer; r++)
+                        //     reorder_buffer[r] = ROB_entry {-1, NOP, 0, false, true};
+                        int index = ((ROB_commit_pointer + 1 )% REORDER_BUFFER_SIZE);
+                        if (ROB_issue_pointer != (((ROB_commit_pointer+1) % REORDER_BUFFER_SIZE)))
+                        {
+                            while (index != ROB_issue_pointer)
+                            {
+                                reorder_buffer[index] = ROB_entry {-1, NOP, 0, false, true};
+                                index = (index + 1) % REORDER_BUFFER_SIZE;
+                            }
+                        }
                         ROB_issue_pointer = ROB_commit_pointer;
                         incrementROBIssue();
                         PC = reorder_buffer[ROB_commit_pointer].p_register_dst;
@@ -979,14 +988,19 @@ void Processor::debug_processor()
     #ifdef SUPERSCALAR
         cout << "\nReorder Buffer" << endl;
         cout << "ENTRY  |  OP  |  Reg Dest  |  VAL  |  DONE " << endl;
-        for (int i = ROB_commit_pointer; i < ROB_issue_pointer; i = (i+1+REORDER_BUFFER_SIZE) % REORDER_BUFFER_SIZE)
+        int index = ROB_commit_pointer + 1;
+        if (ROB_issue_pointer != ROB_commit_pointer)
         {
-            cout << setw(6) << right << i << " | " << setw(4) << right  << reorder_buffer[i].op
-                      << " | " << setw(10) << right  << reorder_buffer[i].p_register_dst
-                      << " | " << setw(5) << right  << reorder_buffer[i].value
-                      << " | " << setw(3) << right  << reorder_buffer[i].done << endl;
-                       
+            while (index != ROB_issue_pointer)
+            {
+                cout << setw(6) << right << index << " | " << setw(4) << right  << reorder_buffer[index].op
+                        << " | " << setw(10) << right  << reorder_buffer[index].p_register_dst
+                        << " | " << setw(5) << right  << reorder_buffer[index].value
+                        << " | " << setw(3) << right  << reorder_buffer[index].done << endl;
+                index = (index + 1) % REORDER_BUFFER_SIZE;
+            }
         }
+       
     #else
         cout << "\nFetch Unit: "  << (fetch_unit->is_empty  ? "Empty"  : fetch_unit->current_instruction.to_string())  << endl;
         cout << "Decode Unit: "  << (decode_unit->is_empty  ? "Empty"  : decode_unit->current_instruction.to_string())  << endl;
