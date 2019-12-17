@@ -374,6 +374,10 @@ void Processor::run_program()
     #endif
 
 
+
+
+    
+
     #ifdef PRINT_STATS
         printf("Time Elapsed: %.2f\n", elapsed_seconds.count());
         printf("Executed Instructions = %d\n", executed_instructions);
@@ -384,6 +388,15 @@ void Processor::run_program()
         printf("Fraction of cycles spent waiting for Memory Access = %.2f\n", (float)(cycles_waiting_for_memory)/(float)cycles);
 
         cout << "\nProgram Result=" << register_file[16] << endl;
+
+        cout << "\nMain Memory : \n" << endl;
+        for (int j = 0; j < 2; j++)  {
+            for (int i = 0; i < 20; i++)  {
+                if (j*10+i < 10)  cout << " ";
+                cout << j * 10 + i << ": " << main_memory[j * 10 + i] << " ";
+            }
+            cout << endl;
+        }
     #else
         cout << register_file[16]; 
     #endif
@@ -759,7 +772,8 @@ void Processor::commit()
                             register_alias_table[r] = -1;
                         for (int r=ROB_commit_pointer+1; r < ROB_issue_pointer; r++)
                             reorder_buffer[r] = ROB_entry {-1, NOP, 0, false, true};
-                        ROB_issue_pointer = ROB_commit_pointer + 1;
+                        ROB_issue_pointer = ROB_commit_pointer;
+                        incrementROBIssue();
                         PC = reorder_buffer[ROB_commit_pointer].p_register_dst;
                         fetch_unit->is_empty = true;
                         decode_unit->is_empty = true;

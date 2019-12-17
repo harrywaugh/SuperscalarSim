@@ -29,31 +29,6 @@ main:
 # Calls stencilcol, which loops through the columns of the image matrix.
 # It then swaps the pointers for the image and tmp image.
 mainfor:
-	j stencilcol
-	mv $t0, $a0
-	mv $a0, $a1
-	mv $a1, $t0
-	j stencilcol
-	addi $a2, $a2, 1
-	blt $a2, $a3, -6
-	exit
-
-# First store return function pointer, going two functions deep
-# Go through each column, calling stencilrow each time.
-# Move back return pointer, and return.
-stencilcol:
-# mv $t9, $ra
-	nop
-	nop
-	j stencilrow
-	addi $s1, $s1, 1
-	blt $s1, $s0, -4
-# mv $ra, $t9
-	mv $s1, $zero
-	return
-
-# Go along each row, and compute each element
-stencilrow:
 # s4 is global index, s4 = nx * j
 # s3 is the x coordinate
 # t4 is the value nx-1
@@ -91,4 +66,52 @@ stencilrow:
 	addi $s3, $s3, 1
 	blt $s3, $s2, -22
 	mv $s3, $zero
-	return
+	addi $s1, $s1, 1
+	blt $s1, $s0, -27
+	mv $s1, $zero
+	mv $t0, $a0
+	mv $a0, $a1
+	mv $a1, $t0
+# s4 is global index, s4 = nx * j
+# s3 is the x coordinate
+# t4 is the value nx-1
+	mul $s4, $s2, $s1
+	subi $t4, $s2, 1
+# Load the current cell from image into f0, offset=s4. Then multiply by 6.
+	lw.f $f0, $s4($a0)
+	muli.f $f0, $f0, 6
+# The next four segments are branches to check whether to add neighbour cells.
+# If on LEFT -> SKIP
+	beq $s3, $zero, 4
+	subi $t3, $s4, 1
+	lw.f $f2, $t3($a0)
+	add.f $f0, $f0, $f2
+# If on RIGHT -> SKIP
+	beq $s3, $t4, 4
+	addi $t3, $s4, 1
+	lw.f $f2, $t3($a0)
+	add.f $f0, $f0, $f2
+# If on TOP -> SKIP
+	beq $s1, $zero, 4
+	sub $t3, $s4, $s0
+	lw.f $f2, $t3($a0)
+	add.f $f0, $f0, $f2
+# If on BOTTOM -> SKIP
+	beq $s1, $t4, 4
+	add $t3, $s4, $s2
+	lw.f $f2, $t3($a0)
+	add.f $f0, $f0, $f2
+# Divide accumulated count by 10, the store in tmp image
+	divi.f $f0, $f0, 10
+	sw.f $f0, $s4($a1)
+# Increment global and row counters, then compute next element if not at end
+	addi $s4, $s4, 1
+	addi $s3, $s3, 1
+	blt $s3, $s2, -22
+	mv $s3, $zero
+	addi $s1, $s1, 1
+	blt $s1, $s0, -27
+	mv $s1, $zero
+	addi $a2, $a2, 1
+	blt $a2, $a3, -62
+	exit
