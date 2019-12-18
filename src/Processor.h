@@ -133,6 +133,8 @@ private:
     int32_t register_alias_table[64]       = { {-1} };
 
     ROB_entry reorder_buffer[REORDER_BUFFER_SIZE];
+    int currently_issued_instructions = 0;
+    
     short ROB_commit_pointer = 0;
     short ROB_issue_pointer  = 0;
 

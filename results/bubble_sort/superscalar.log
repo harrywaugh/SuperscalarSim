@@ -1,17 +1,17 @@
-Time Elapsed: 0.00
-Executed Instructions = 12
-Total Cycles = 14
+Time Elapsed: 0.01
+Executed Instructions = 904
+Total Cycles = 1191
 
-Instructions per Cycle = 0.86
-Instructions per Second = 69364.16
+Instructions per Cycle = 0.76
+Instructions per Second = 92956.30
 
-Time spent waiting for Memory Access = 4
+Time spent waiting for Memory Access = 512
 
-Fraction of cycles spent waiting for Memory Access = 0.29
+Fraction of cycles spent waiting for Memory Access = 0.43
 
 Program Result=0
 
 Main Memory : 
 
- 0: 7  1: 8  2: 9  3: 54  4: 35  5: 5  6: 4  7: 3  8: 2  9: 1 10: 0 11: 0 12: 0 13: 0 14: 0 15: 0 16: 0 17: 0 18: 0 19: 0 
+ 0: 1  1: 2  2: 3  3: 4  4: 5  5: 7  6: 8  7: 9  8: 35  9: 54 10: 0 11: 0 12: 0 13: 0 14: 0 15: 0 16: 0 17: 0 18: 0 19: 0 
 10: 0 11: 0 12: 0 13: 0 14: 0 15: 0 16: 0 17: 0 18: 0 19: 0 20: 0 21: 0 22: 0 23: 0 24: 0 25: 0 26: 0 27: 0 28: 0 29: 0 
