@@ -32,6 +32,7 @@ void Processor::MemoryUnit::update_current_instruction(RS_entry &rs_entry)
     current_operation = rs_entry.op;
     is_empty = false;
     rob_dst = rs_entry.rob_dst;
+
 }
 
 

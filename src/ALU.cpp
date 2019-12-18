@@ -24,8 +24,8 @@ void Processor::ALU::update_current_instruction()
 
 void Processor::ALU::update_current_instruction(RS_entry &rs_entry)  
 {
-    current_operand0          = rs_entry.val0;
-    current_operand1          = rs_entry.val1;
+    memcpy(&current_operand0, &rs_entry.val0, sizeof(int32_t));
+    memcpy(&current_operand1, &rs_entry.val1, sizeof(int32_t));
     current_operation = rs_entry.op;
     ready_for_broadcast = false;
     rob_dst = rs_entry.rob_dst;
@@ -160,5 +160,5 @@ void Processor::ALU::print_state_string()
     if (is_empty)
         cout << "Empty";
     else 
-        cout << current_operation << " " << current_operand0 << " " << current_operand1;
+        cout << "ROB" << rob_dst << " " <<  current_operation << " " << current_operand0 << " " << current_operand1;
 }

@@ -52,6 +52,9 @@ superscalar-debug: src/main.cpp
 
 superscalar-test: clean superscalar
 	@python3 src/run_tests.py
+	./simulator.exe programs/stencil.benchmark > /dev/null
+	@echo "Difference between stencil results and correct image:\n"
+	diff 16x16_correct.pgm after.pgm 
 
 ################################################
 ## Misc
@@ -73,9 +76,6 @@ check:
 
 	@echo "Running superscalar tests..."
 	make superscalar-test -j
-	./simulator.exe programs/stencil.benchmark > /dev/null
-	@echo "Difference between stencil results and correct image:\n"
-	diff 16x16_correct.pgm after.pgm 
 
 
 
