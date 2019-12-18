@@ -41,31 +41,9 @@ void Processor::BranchUnit::execute(Processor *processor)
             current_result = -1;
             break;
         case BEQ:
-            // if (current_operand0 != current_operand1)
-            // {
-            //     processor->PC = processor->branch_record.front() + 1;
-            //     processor->refresh_pipeline();
-            //     while (!processor->branch_record.empty())
-            //         processor->branch_record.pop();
-            // }
-            // else
-            // {
-            //     processor->branch_record.pop();
-            // }
             current_result = (current_operand0 == current_operand1) ? 1 : 0;
             break;
         case BLT:
-            // if (current_operand0 >= current_operand1)
-            // {
-            //     processor->PC = processor->branch_record.front() + 1;
-            //     processor->refresh_pipeline();
-            //     while (!processor->branch_record.empty())
-            //         processor->branch_record.pop();
-            // }
-            // else
-            // {
-            //     processor->branch_record.pop();
-            // }
             current_result = (current_operand0 < current_operand1) ? 1 : 0;
             break;
     }
@@ -78,6 +56,9 @@ void Processor::BranchUnit::completeInstruction(Processor *processor)
     is_empty = true;
     ready_for_broadcast = true;
 
+    if (rob_dst < 0 || rob_dst >= REORDER_BUFFER_SIZE)
+        cout << "ERROR: Branch unit broadcasting to non-existant ROB entry" << endl;
+
     memcpy(&processor->reorder_buffer[rob_dst].value, &current_result, sizeof(int32_t));
     processor->reorder_buffer[rob_dst].done = true;
 }
@@ -88,5 +69,5 @@ void Processor::BranchUnit::print_state_string()
     if (is_empty)
         cout << "Empty";
     else 
-        cout << current_operation << " " << current_operand0 << " " << current_operand1;
+        cout << "ROB" << rob_dst << " " << current_operation << " " << current_operand0 << " " << current_operand1;
 }

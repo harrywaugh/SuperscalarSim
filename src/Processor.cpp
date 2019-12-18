@@ -540,6 +540,7 @@ void Processor::issue()
                             false, // Marks entry as done
                             false // Marks entry as not empty
                         };
+                        mem_reservation_station[i] = {NOP, -1, -1, -1, -1, 0, 0, 0, -1, true};
                         mem_reservation_station[i].op = string_to_op_map.at(instruction_queue.front().opcode);
                         mem_reservation_station[i].rob_dst = ROB_issue_pointer;
                         switch (string_to_op_map[instruction_queue.front().opcode]) 
@@ -585,6 +586,11 @@ void Processor::issue()
                                     memcpy(&mem_reservation_station[i].val1, &register_file[register_map.at(instruction_queue.front().operand1)], sizeof(int32_t));
                                 if(mem_reservation_station[i].rob_op2_dependency == -1)
                                     memcpy(&mem_reservation_station[i].val2, &register_file[register_map.at(instruction_queue.front().operand2)], sizeof(int32_t));
+                                if (mem_reservation_station[i].val2 == 1536)
+                                {
+                                    cout << "ERROR: found 1536 in res station"<< endl;
+                                    exit(0);
+                                }
                                 if (mem_reservation_station[i].rob_op0_dependency != -1 && reorder_buffer[mem_reservation_station[i].rob_op0_dependency].done)
                                 {
                                     memcpy(&mem_reservation_station[i].val0, &reorder_buffer[mem_reservation_station[i].rob_op0_dependency].value, sizeof(int32_t));

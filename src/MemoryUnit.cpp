@@ -25,9 +25,10 @@ void Processor::MemoryUnit::update_current_instruction()
 
 void Processor::MemoryUnit::update_current_instruction(RS_entry &rs_entry)  
 {
-    current_operand0          = rs_entry.val0;
-    current_operand1          = rs_entry.val1;
-    current_operand2          = rs_entry.val2;
+    memcpy(&current_operand0, &rs_entry.val0, sizeof(int32_t));
+    memcpy(&current_operand1, &rs_entry.val1, sizeof(int32_t));
+    memcpy(&current_operand2, &rs_entry.val2, sizeof(int32_t));
+
     current_operation = rs_entry.op;
     is_empty = false;
     rob_dst = rs_entry.rob_dst;
@@ -56,6 +57,11 @@ void Processor::MemoryUnit::execute(Processor *processor)
             blocking_for--;
             processor->cycles_waiting_for_memory++;
             if (blocking_for > 0)  return;
+            if ((current_operand1 + current_operand0) >= 1024 || (current_operand1 + current_operand0) < 0)
+            {
+                cout << "Mem unit trying to access non-existant memory" << endl;
+                cout << current_operation << " " << current_operand0 << " " << current_operand1 << " " << current_operand2 << endl;
+            }
             current_result = processor->main_memory[current_operand1 + current_operand0];
             processor->cycles_waiting_for_memory+=MEM_ACCESS_TIME;
             break;
@@ -63,6 +69,11 @@ void Processor::MemoryUnit::execute(Processor *processor)
             if (blocking_for == -1)  blocking_for = MEM_ACCESS_TIME;
             blocking_for--;
             processor->cycles_waiting_for_memory++;
+            if ((current_operand1 + current_operand0) >= 1024 || (current_operand1 + current_operand0) < 0)
+            {
+                cout << "Mem unit trying to access non-existant memory" << endl;
+                cout << current_operation << " " << current_operand0 << " " << current_operand1 << " " << current_operand2 << endl;
+            }
             if (blocking_for > 0)  return;
             memcpy(&current_result, &(processor->main_memory[current_operand1 + current_operand0]), sizeof(float));
             processor->cycles_waiting_for_memory+=MEM_ACCESS_TIME;
@@ -75,6 +86,11 @@ void Processor::MemoryUnit::execute(Processor *processor)
             blocking_for--;
             processor->cycles_waiting_for_memory++;
             if (blocking_for > 0)  return;
+            if ((current_operand1 + current_operand2) >= 1024 || (current_operand1 + current_operand2) < 0)
+            {
+                cout << "Mem unit trying to access non-existant memory" << endl;
+                cout << current_operation << " " << current_operand0 << " " << current_operand1 << " " << current_operand2 << endl;
+            }
             processor->main_memory[current_operand1 + current_operand2] =  current_operand0;
             processor->cycles_waiting_for_memory+=MEM_ACCESS_TIME;
             break;
@@ -83,6 +99,11 @@ void Processor::MemoryUnit::execute(Processor *processor)
             blocking_for--;
             processor->cycles_waiting_for_memory++;
             if (blocking_for > 0)  return;
+            if ((current_operand1 + current_operand2) >= 1024 || (current_operand1 + current_operand2) < 0)
+            {
+                cout << "Mem unit trying to access non-existant memory" << endl;
+                cout << current_operation << " " << current_operand0 << " " << current_operand1 << " " << current_operand2 << endl;
+            }
             memcpy(&(processor->main_memory[current_operand1 + current_operand2]), &current_operand0, sizeof(float));
             processor->cycles_waiting_for_memory+=MEM_ACCESS_TIME;
             break;
@@ -94,6 +115,7 @@ void Processor::MemoryUnit::completeInstruction(Processor *processor)
 {
     processor->executed_instructions++;
     is_empty = true;
+
     for (int r = 0; r < MEM_RES_STATION_SIZE; r++)
     {
         RS_entry *rs_entry = &processor->mem_reservation_station[r];
@@ -113,6 +135,7 @@ void Processor::MemoryUnit::completeInstruction(Processor *processor)
             {
                 rs_entry->rob_op2_dependency = -1;
                 memcpy(&rs_entry->val2, &current_result, sizeof(int32_t));
+                
             }
 
         }
@@ -154,6 +177,10 @@ void Processor::MemoryUnit::completeInstruction(Processor *processor)
         }
     }
 
+
+    if (rob_dst < 0 || rob_dst >= REORDER_BUFFER_SIZE)
+        cout << "ERROR: Memory unit broadcasting to non-existant ROB entry" << endl;
+
     memcpy(&processor->reorder_buffer[rob_dst].value, &current_result, sizeof(int32_t));
     processor->reorder_buffer[rob_dst].done = true;
 }
@@ -164,5 +191,5 @@ void Processor::MemoryUnit::print_state_string()
     if (is_empty)
         cout << "Empty";
     else 
-        cout << current_operation << " " << current_operand0 << " " << current_operand1;
+        cout << "ROB" << rob_dst << " " << current_operation << " " << current_operand0 << " " << current_operand1;
 }

@@ -8,6 +8,7 @@
 #include <chrono>
 #include <ctime>
 #include <iomanip>
+#include <cstring>
 
 #include "Instruction.h"
 
@@ -19,15 +20,15 @@
 // #define PIPELINED 1
 
 #ifdef SUPERSCALAR
-    #define FETCH_INSTR_PER_CYCLE 2
-    #define DECODE_INSTR_PER_CYCLE 2
+    #define FETCH_INSTR_PER_CYCLE 4
+    #define DECODE_INSTR_PER_CYCLE 4
 #else
     #define FETCH_INSTR_PER_CYCLE 1
     #define DECODE_INSTR_PER_CYCLE 1
 #endif
 
 #define COMMIT_INSTR_PER_CYCLE 6
-#define ISSUE_INSTR_PER_CYCLE 6
+#define ISSUE_INSTR_PER_CYCLE 4
 
 #define EXECUTE_UNITS 1
 #define MEM_UNITS 1

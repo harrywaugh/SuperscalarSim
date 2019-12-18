@@ -28,7 +28,7 @@ void Processor::FetchUnit::get_instructions(Processor *processor)
 {
     instructions.clear();
     int counter = 0;
-    while ((processor->PC < processor->instructions.size() )&& (counter < FETCH_INSTR_PER_CYCLE))
+    while ((processor->PC < processor->instructions.size()) && (counter < FETCH_INSTR_PER_CYCLE))
     {
         switch (processor->string_to_op_map[processor->instructions.at(processor->PC).opcode]) {
             case J:
