@@ -32,15 +32,28 @@ void Processor::FetchUnit::get_instructions(Processor *processor)
     {
         switch (processor->string_to_op_map[processor->instructions.at(processor->PC).opcode]) {
             case J:
+                instructions.push_back(processor->instructions.at(processor->PC));
                 processor->PC = processor->fn_map.at(processor->instructions.at(processor->PC).operand0)-1;
                 break;
             case BEQ:
                 instructions.push_back(processor->instructions.at(processor->PC));
-                processor->PC += stoi(processor->instructions.at(processor->PC).operand2)-1;
+                if (processor->current_branch_state == STRONGLY_TAKEN || processor->current_branch_state == WEAKLY_TAKEN)
+                {
+                    processor->PC += stoi(processor->instructions.at(processor->PC).operand2)-1;
+                    instructions.back().branch_taken = 1;
+                }
+                else
+                    instructions.back().branch_taken = 0;
                 break;
             case BLT:
                 instructions.push_back(processor->instructions.at(processor->PC));
-                processor->PC += stoi(processor->instructions.at(processor->PC).operand2)-1;
+                if (processor->current_branch_state == STRONGLY_TAKEN || processor->current_branch_state == WEAKLY_TAKEN)
+                {
+                    processor->PC += stoi(processor->instructions.at(processor->PC).operand2)-1;
+                    instructions.back().branch_taken = 1;
+                }
+                else
+                    instructions.back().branch_taken = 0;
                 break;
             default:
                 instructions.push_back(processor->instructions.at(processor->PC));

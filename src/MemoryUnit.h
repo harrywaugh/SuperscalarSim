@@ -1,6 +1,5 @@
 #include "Processor.h"
 
-#define MEM_ACCESS_TIME 1
 
 using namespace std;
 

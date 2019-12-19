@@ -22,6 +22,7 @@ public :
     string operand1 = "";
     string operand2 = "";
     int PC;
+    int branch_taken = 0;
 
     string to_string();
 };

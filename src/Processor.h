@@ -7,7 +7,8 @@
 #include <stack>
 #include <chrono>
 #include <ctime>
-#include <iomanip>
+#include <iomanip> 
+#include <string> 
 #include <cstring>
 
 #include "Instruction.h"
@@ -19,26 +20,34 @@
 // #define PRINT_MEM_TO_BITMAP
 // #define PIPELINED 1
 
+#define SUPERSCALAR_WIDTH 6
+
 #ifdef SUPERSCALAR
-    #define FETCH_INSTR_PER_CYCLE 4
-    #define DECODE_INSTR_PER_CYCLE 4
+    #define FETCH_INSTR_PER_CYCLE SUPERSCALAR_WIDTH
+    #define DECODE_INSTR_PER_CYCLE SUPERSCALAR_WIDTH
 #else
     #define FETCH_INSTR_PER_CYCLE 1
     #define DECODE_INSTR_PER_CYCLE 1
 #endif
 
-#define COMMIT_INSTR_PER_CYCLE 6
-#define ISSUE_INSTR_PER_CYCLE 4
+#define COMMIT_INSTR_PER_CYCLE SUPERSCALAR_WIDTH
+#define ISSUE_INSTR_PER_CYCLE SUPERSCALAR_WIDTH
 
 #define EXECUTE_UNITS 1
 #define MEM_UNITS 1
 #define BRANCH_UNITS 1
-#define ALU_UNITS 2
+#define ALU_UNITS 4
 
 #define ALU_RES_STATION_SIZE 16
 #define BRANCH_RES_STATION_SIZE 8
 #define MEM_RES_STATION_SIZE 8
 #define REORDER_BUFFER_SIZE 32
+
+// #define BRANCH_PREDICTOR 0 //"STATIC_TAKEN"
+#define BRANCH_PREDICTOR 1 //"DYNAMIC_TWO_BIT_SATURATING"
+// #define BRANCH_PREDICTOR "DYNAMIC_TWO_LEVEL_ADAPTIVE"
+
+#define MEM_ACCESS_TIME 3
 
 
 enum OPERATION
@@ -74,6 +83,12 @@ enum OPERATION
     NOP
 };
 
+enum BRANCH_STATE {
+    STRONGLY_NOT_TAKEN = 0,
+    WEAKLY_NOT_TAKEN   = 1,
+    WEAKLY_TAKEN       = 2,
+    STRONGLY_TAKEN     = 3,
+};
 
 using namespace std;
 
@@ -110,7 +125,10 @@ private:
     int executed_instructions = 0;
     int cycles_waiting_for_memory = 0;
     int free_mem_pointer = 0;
+    int branches_mispredicts = 0;
+    int executed_branches = 0;
     bool refresh_flag = false;
+    BRANCH_STATE current_branch_state = WEAKLY_TAKEN;
 
     Instruction nop_instruction;
 
@@ -222,6 +240,7 @@ public:
     void incrementCycles();
     void incrementROBCommit();
     void incrementROBIssue();
+    void update_branch_state(int branch_taken);
 
     void issue();
     void dispatch();

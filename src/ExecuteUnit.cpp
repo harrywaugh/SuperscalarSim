@@ -156,15 +156,15 @@ void Processor::ExecuteUnit::execute(Processor *processor)
         case LW:
             processor->register_file[processor->register_map.at(current_instruction.operand0)] = processor->main_memory[processor->register_file[processor->register_map.at(current_instruction.operand2)] +
                                                                                    processor->register_file[processor->register_map.at(current_instruction.operand1)]];
-            processor->cycles+=2;
-            processor->cycles_waiting_for_memory+=2;
+            processor->cycles+=MEM_ACCESS_TIME-1;
+            processor->cycles_waiting_for_memory+=MEM_ACCESS_TIME-1;
             break;
         case LW_F:
             memcpy(&processor->register_file[processor->register_map.at(current_instruction.operand0)], 
                    &(processor->main_memory)[processor->register_file[processor->register_map.at(current_instruction.operand2)] + processor->register_file[processor->register_map.at(current_instruction.operand1)]],
                    sizeof(float));
-            processor->cycles+=2;
-            processor->cycles_waiting_for_memory+=2;
+            processor->cycles+=MEM_ACCESS_TIME-1;
+            processor->cycles_waiting_for_memory+=MEM_ACCESS_TIME-1;
             break;
         case LA:
             processor->register_file[processor->register_map.at(current_instruction.operand0)] = processor->var_map.at(current_instruction.operand1);
@@ -172,15 +172,15 @@ void Processor::ExecuteUnit::execute(Processor *processor)
         case SW:
             processor->main_memory[processor->register_file[processor->register_map.at(current_instruction.operand2)] +
                         processor->register_file[processor->register_map.at(current_instruction.operand1)]] = processor->register_file[processor->register_map.at(current_instruction.operand0)];
-            processor->cycles+=2;
-            processor->cycles_waiting_for_memory+=2;
+            processor->cycles+=MEM_ACCESS_TIME-1;
+            processor->cycles_waiting_for_memory+=MEM_ACCESS_TIME-1;
             break;
         case SW_F:
             memcpy(&(processor->main_memory)[processor->register_file[processor->register_map.at(current_instruction.operand2)] + processor->register_file[processor->register_map.at(current_instruction.operand1)]],
                    &processor->register_file[processor->register_map.at(current_instruction.operand0)], 
                    sizeof(float));
-            processor->cycles+=2;
-            processor->cycles_waiting_for_memory+=2;
+            processor->cycles+=MEM_ACCESS_TIME-1;
+            processor->cycles_waiting_for_memory+=MEM_ACCESS_TIME-1;
             break;
         case NOP:
             break;

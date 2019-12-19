@@ -1,17 +1,20 @@
-Time Elapsed: 0.00
-Executed Instructions = 43
-Total Cycles = 161
-
-Instructions per Cycle = 0.27
-Instructions per Second = 282894.75
-
-Time spent waiting for Memory Access = 32
-
-Fraction of cycles spent waiting for Memory Access = 0.20
-
-Program Result=0
+################################################################ Simulator Config,Value
+Simulator Type,SERIAL
+################################################################ Analysis Field,Value
+Time Elapsed,0.00
+Executed Instructions,43
+Total Cycles,161
+Instructions per Cycle,0.27
+Instructions per Second,302816.91
+Cycles spent Waiting for Memory Access,32
+Proportion of Program spent Waiting for Memory Access,0.20
+Branch Prediction Accuracy,nan
+################################################################ Field, ProgramResult
+Program Result,0
 
 Main Memory : 
 
  0: 1  1: 2  2: 3  3: 4  4: 5  5: 2  6: 3  7: 4  8: 5  9: 6 10: 5 11: 0 12: 0 13: 0 14: 0 15: 0 16: 0 17: 0 18: 0 19: 0 
 10: 5 11: 0 12: 0 13: 0 14: 0 15: 0 16: 0 17: 0 18: 0 19: 0 20: 0 21: 0 22: 0 23: 0 24: 0 25: 0 26: 0 27: 0 28: 0 29: 0 
+20: 0 21: 0 22: 0 23: 0 24: 0 25: 0 26: 0 27: 0 28: 0 29: 0 30: 0 31: 0 32: 0 33: 0 34: 0 35: 0 36: 0 37: 0 38: 0 39: 0 
+################################################################

@@ -57,6 +57,7 @@ void Processor::MemoryUnit::execute(Processor *processor)
             if (blocking_for == -1)  blocking_for = MEM_ACCESS_TIME;
             blocking_for--;
             processor->cycles_waiting_for_memory++;
+            
             if (blocking_for > 0)  return;
             if ((current_operand1 + current_operand0) >= 1024 || (current_operand1 + current_operand0) < 0)
             {
@@ -64,20 +65,19 @@ void Processor::MemoryUnit::execute(Processor *processor)
                 cout << current_operation << " " << current_operand0 << " " << current_operand1 << " " << current_operand2 << endl;
             }
             current_result = processor->main_memory[current_operand1 + current_operand0];
-            processor->cycles_waiting_for_memory+=MEM_ACCESS_TIME;
             break;
         case LW_F:
             if (blocking_for == -1)  blocking_for = MEM_ACCESS_TIME;
             blocking_for--;
             processor->cycles_waiting_for_memory++;
+            if (blocking_for > 0)  return;
+            
             if ((current_operand1 + current_operand0) >= 1024 || (current_operand1 + current_operand0) < 0)
             {
                 cout << "Mem unit trying to access non-existant memory" << endl;
                 cout << current_operation << " " << current_operand0 << " " << current_operand1 << " " << current_operand2 << endl;
             }
-            if (blocking_for > 0)  return;
             memcpy(&current_result, &(processor->main_memory[current_operand1 + current_operand0]), sizeof(float));
-            processor->cycles_waiting_for_memory+=MEM_ACCESS_TIME;
             break;
         case LA:
             current_result = current_operand0;
@@ -86,6 +86,7 @@ void Processor::MemoryUnit::execute(Processor *processor)
             if (blocking_for == -1)  blocking_for = MEM_ACCESS_TIME;
             blocking_for--;
             processor->cycles_waiting_for_memory++;
+            
             if (blocking_for > 0)  return;
             if ((current_operand1 + current_operand2) >= 1024 || (current_operand1 + current_operand2) < 0)
             {
@@ -93,12 +94,12 @@ void Processor::MemoryUnit::execute(Processor *processor)
                 cout << current_operation << " " << current_operand0 << " " << current_operand1 << " " << current_operand2 << endl;
             }
             processor->main_memory[current_operand1 + current_operand2] =  current_operand0;
-            processor->cycles_waiting_for_memory+=MEM_ACCESS_TIME;
             break;
         case SW_F:
             if (blocking_for == -1)  blocking_for = MEM_ACCESS_TIME;
             blocking_for--;
             processor->cycles_waiting_for_memory++;
+            
             if (blocking_for > 0)  return;
             if ((current_operand1 + current_operand2) >= 1024 || (current_operand1 + current_operand2) < 0)
             {
@@ -106,7 +107,6 @@ void Processor::MemoryUnit::execute(Processor *processor)
                 cout << current_operation << " " << current_operand0 << " " << current_operand1 << " " << current_operand2 << endl;
             }
             memcpy(&(processor->main_memory[current_operand1 + current_operand2]), &current_operand0, sizeof(float));
-            processor->cycles_waiting_for_memory+=MEM_ACCESS_TIME;
             break;
     }
     completeInstruction(processor);

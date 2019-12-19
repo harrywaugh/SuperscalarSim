@@ -95,6 +95,16 @@ ostream& operator<<(std::ostream& out, OPERATION op) {
     return out;
 }
 
+ostream& operator<<(std::ostream& out, BRANCH_STATE bs) {
+    switch (bs) {
+        case STRONGLY_NOT_TAKEN: out << "STRONGLY_NOT_TAKEN"; break;
+        case WEAKLY_NOT_TAKEN: out << "WEAKLY_NOT_TAKEN"; break;
+        case WEAKLY_TAKEN: out << "WEAKLY_TAKEN"; break;
+        case STRONGLY_TAKEN: out << "STRONGLY_TAKEN"; break;
+    }
+    return out;
+}
+
 template< typename T >
 std::string int_to_hex( T i )
 {
@@ -126,6 +136,15 @@ void Processor::incrementROBIssue()
 {
     ROB_issue_pointer = (ROB_issue_pointer + 1) % REORDER_BUFFER_SIZE;
     currently_issued_instructions++;
+}
+
+void Processor:: update_branch_state(int branch_state)
+{
+    if (BRANCH_PREDICTOR == 0)  return;
+    if (branch_state == 1)
+        current_branch_state = (BRANCH_STATE)min((int)current_branch_state + 1, 3);
+    else 
+        current_branch_state = (BRANCH_STATE)max((int)current_branch_state - 1, 0);
 }
 
 void Processor::addInstruction(string line)  
@@ -255,12 +274,11 @@ void Processor::run_program()
                 // cout << "PASSED FETCH" << endl;
 
                 #ifdef DEBUG
-                    if (cycles > 8735)
-                    {
+                    // if (cycles > 0)
+                    // {
                         debug_processor();
                         getchar();
-                        
-                    }
+                    // }
                 #endif
 
                 // for (int i = 0; i < mem_reservation_station[i])
@@ -381,24 +399,52 @@ void Processor::run_program()
     
 
     #ifdef PRINT_STATS
-        printf("Time Elapsed: %.2f\n", elapsed_seconds.count());
-        printf("Executed Instructions = %d\n", executed_instructions);
-        printf("Total Cycles = %.d\n\n", cycles);
-        printf("Instructions per Cycle = %.2f\n", (float)(executed_instructions) / (float)(cycles));
-        printf("Instructions per Second = %.2f\n\n", (float)(executed_instructions) / (float)(elapsed_seconds.count()));
-        printf("Time spent waiting for Memory Access = %d\n\n", cycles_waiting_for_memory);
-        printf("Fraction of cycles spent waiting for Memory Access = %.2f\n", (float)(cycles_waiting_for_memory)/(float)cycles);
-
-        cout << "\nProgram Result=" << register_file[16] << endl;
+         printf("################################################################");
+        printf(" Simulator Config,Value\n");
+        #ifdef PIPELINED
+            #ifdef SUPERSCALAR
+                printf("Simulator Type,SUPERSCALAR\n");
+                printf("Fetch Instructions per Cycle,%d\n",  FETCH_INSTR_PER_CYCLE);
+                printf("Decode Instructions per Cycle,%d\n", DECODE_INSTR_PER_CYCLE);
+                printf("Issue Instructions per Cycle,%d\n", ISSUE_INSTR_PER_CYCLE);
+                printf("Commit Instructions per Cycle,%d\n", COMMIT_INSTR_PER_CYCLE);
+                printf("Load/Store Units,%d\n", MEM_UNITS);
+                printf("Load/Store Reservation Station Size,%d\n", MEM_RES_STATION_SIZE);
+                printf("Branch Units,%d\n", BRANCH_UNITS);
+                printf("Branch Reservation Station Size,%d\n", BRANCH_RES_STATION_SIZE);
+                printf("ALU Units,%d\n", ALU_UNITS);
+                printf("ALU Reservation Station Size,%d\n", ALU_RES_STATION_SIZE);
+                printf("Reorder Buffer Size,%d\n", REORDER_BUFFER_SIZE);
+                printf("Time for Memory Access,%d\n", MEM_ACCESS_TIME);
+            #else
+                printf("Simulator Type,PIPELINED\n");
+            #endif
+        #else
+            printf("Simulator Type,SERIAL\n");
+        #endif
+        printf("################################################################");
+        printf(" Analysis Field,Value\n");
+        printf("Time Elapsed,%.2f\n", elapsed_seconds.count());
+        printf("Executed Instructions,%d\n", executed_instructions);
+        printf("Total Cycles,%.d\n", cycles);
+        printf("Instructions per Cycle,%.2f\n", (float)(executed_instructions) / (float)(cycles));
+        printf("Instructions per Second,%.2f\n", (float)(executed_instructions) / (float)(elapsed_seconds.count()));
+        printf("Cycles spent Waiting for Memory Access,%d\n", cycles_waiting_for_memory);
+        printf("Proportion of Program spent Waiting for Memory Access,%.2f\n", (float)(cycles_waiting_for_memory)/(float)cycles);
+        printf("Branch Prediction Accuracy,%.2f\n", 1.f - (float)(branches_mispredicts)/(float)executed_branches);
+        printf("################################################################ Field, ProgramResult");
+        cout << "\nProgram Result," << register_file[16] << endl;
 
         cout << "\nMain Memory : \n" << endl;
-        for (int j = 0; j < 2; j++)  {
+        for (int j = 0; j < 3; j++)  {
             for (int i = 0; i < 20; i++)  {
                 if (j*10+i < 10)  cout << " ";
                 cout << j * 10 + i << ": " << main_memory[j * 10 + i] << " ";
             }
             cout << endl;
         }
+        printf("################################################################\n");
+
     #else
         cout << register_file[16]; 
     #endif
@@ -454,7 +500,10 @@ void Processor::issue()
         bool res_station_full = true;
         switch (string_to_op_map[instruction_queue.front().opcode]) 
         {
-            case BEQ: case BLT: case J: case RETURN: case EXIT:
+            case J: case RETURN:
+                instruction_queue.erase(instruction_queue.begin());
+                break;
+            case BEQ: case BLT: case EXIT:
                 for (int i = 0; i < BRANCH_RES_STATION_SIZE; i++)
                     res_station_full &= !branch_reservation_station[i].is_empty;
                 if (res_station_full)  return;
@@ -469,8 +518,8 @@ void Processor::issue()
                                 break;
                             case BEQ: case BLT:
                                 reorder_buffer[ROB_issue_pointer] = ROB_entry {
-                                    // instruction_queue.front().PC + stoi(instruction_queue.front().operand2), // BRANCH LOC IF TAKEN
-                                    instruction_queue.front().PC + 1, // BRANCH LOC IF NOT TAKEN
+                                    // If branch taken, store branch not taken. If branch not taken, store taken.
+                                    (instruction_queue.front().branch_taken == 1) ? instruction_queue.front().PC + 1 : instruction_queue.front().PC + stoi(instruction_queue.front().operand2), // BRANCH LOC IF NOT TAKEN
                                     string_to_op_map[instruction_queue.front().opcode],
                                     0, 
                                     false, // Marks entry as done
@@ -480,6 +529,7 @@ void Processor::issue()
                                 branch_reservation_station[i].rob_dst = ROB_issue_pointer;
                                 branch_reservation_station[i].rob_op0_dependency = register_alias_table[register_map.at(instruction_queue.front().operand0)];
                                 branch_reservation_station[i].rob_op1_dependency = register_alias_table[register_map.at(instruction_queue.front().operand1)];
+                                branch_reservation_station[i].val2 = instruction_queue.front().branch_taken;
                                 if(branch_reservation_station[i].rob_op0_dependency == -1)
                                     memcpy(&branch_reservation_station[i].val0, &register_file[register_map.at(instruction_queue.front().operand0)], sizeof(int32_t));
                                 if(branch_reservation_station[i].rob_op1_dependency == -1)
@@ -769,8 +819,12 @@ void Processor::commit()
                     currently_issued_instructions--;
                     break;
                 case BEQ: case BLT:
+                    executed_branches++;
                     if (reorder_buffer[ROB_commit_pointer].value == 0)
                     {
+                        /// Branch mispredict
+                        branches_mispredicts++;
+
                         for (int r = 0; r < 64; r++)
                             register_alias_table[r] = -1;
                         // for (int r=ROB_commit_pointer+1; r < ROB_issue_pointer; r++)
@@ -836,6 +890,7 @@ void Processor::commit()
 
 void Processor::refresh_pipeline() 
 {
+    branches_mispredicts++;
     Instruction empty_instruction;
     fetch_unit->current_instruction   = empty_instruction;
     fetch_unit->next_instruction      = empty_instruction;
@@ -945,7 +1000,7 @@ void Processor::debug_processor()
         for (int i = 0; i < decode_unit->instructions.size(); i++)
             cout << "Decode Unit " << i << ": " << decode_unit->instructions.at(i).to_string() << endl;
         // cout << "Decode Unit: " << (decode_unit->is_empty  ? "Empty"  : decode_unit->current_instruction.to_string())  << endl;
-        cout << "\nInstruction Queue (Front 5 elements only): " << endl;
+        cout << "\nInstruction Queue (size=" << instruction_queue.size()<< ") (First 5 elementss): " << endl;
         for (int i = 0; i < min(5, (int)instruction_queue.size()); i++)
             cout << i << ". " << instruction_queue.at(i).to_string() << endl; 
 
@@ -963,6 +1018,7 @@ void Processor::debug_processor()
         for (int i = 0; i < BRANCH_UNITS; i++)
             branch_units.at(i).print_state_string();
         cout << endl;
+
         cout << "   OP   |  ROB_DST  |  ROB0  |  ROB1  |  ROB2  |  VAL0  |  VAL1  |  VAL2  |  EMPTY " << endl;
 
         for (int i = 0; i < BRANCH_RES_STATION_SIZE; i++)
@@ -980,6 +1036,7 @@ void Processor::debug_processor()
                 printRSEntry(mem_reservation_station[i]);
 
     #endif
+    cout << "\nBRANCH PREDICTOR STATE: " << current_branch_state << endl << endl;
 
     cout << "\nMain Memory : \n" << endl;
 

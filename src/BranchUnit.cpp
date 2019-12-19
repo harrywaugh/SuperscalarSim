@@ -26,6 +26,7 @@ void Processor::BranchUnit::update_current_instruction(RS_entry &rs_entry)
 {
     current_operand0          = rs_entry.val0;
     current_operand1          = rs_entry.val1;
+    branch_taken              = rs_entry.val2;
     current_operation = rs_entry.op;
     rob_dst = rs_entry.rob_dst;
     is_empty = false;
@@ -42,9 +43,19 @@ void Processor::BranchUnit::execute(Processor *processor)
             break;
         case BEQ:
             current_result = (current_operand0 == current_operand1) ? 1 : 0;
+            processor->update_branch_state(current_result);
+            if ((branch_taken == 1 && current_result == 0) || (branch_taken == 0 && current_result == 1))
+                current_result = 0;
+            else
+                current_result = 1;
             break;
         case BLT:
             current_result = (current_operand0 < current_operand1) ? 1 : 0;
+            processor->update_branch_state(current_result);
+            if ((branch_taken == 1 && current_result == 0) || (branch_taken == 0 && current_result == 1))
+                current_result = 0;
+            else
+                current_result = 1;
             break;
     }
     completeInstruction(processor);

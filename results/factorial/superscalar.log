@@ -1,17 +1,32 @@
-Time Elapsed: 0.00
-Executed Instructions = 52
-Total Cycles = 99
-
-Instructions per Cycle = 0.53
-Instructions per Second = 131645.56
-
-Time spent waiting for Memory Access = 2
-
-Fraction of cycles spent waiting for Memory Access = 0.02
-
-Program Result=479001600
+################################################################ Simulator Config,Value
+Simulator Type,SUPERSCALAR
+Fetch Instructions per Cycle,8
+Decode Instructions per Cycle,8
+Issue Instructions per Cycle,8
+Commit Instructions per Cycle,8
+Load/Store Units,2
+Load/Store Reservation Station Size,8
+Branch Units,2
+Branch Reservation Station Size,8
+ALU Units,4
+ALU Reservation Station Size,16
+Reorder Buffer Size,32
+Time for Memory Access,3
+################################################################ Analysis Field,Value
+Time Elapsed,0.00
+Executed Instructions,62
+Total Cycles,89
+Instructions per Cycle,0.70
+Instructions per Second,149758.45
+Cycles spent Waiting for Memory Access,3
+Proportion of Program spent Waiting for Memory Access,0.03
+Branch Prediction Accuracy,0.92
+################################################################ Field, ProgramResult
+Program Result,479001600
 
 Main Memory : 
 
  0: 12  1: 0  2: 0  3: 0  4: 0  5: 0  6: 0  7: 0  8: 0  9: 0 10: 0 11: 0 12: 0 13: 0 14: 0 15: 0 16: 0 17: 0 18: 0 19: 0 
 10: 0 11: 0 12: 0 13: 0 14: 0 15: 0 16: 0 17: 0 18: 0 19: 0 20: 0 21: 0 22: 0 23: 0 24: 0 25: 0 26: 0 27: 0 28: 0 29: 0 
+20: 0 21: 0 22: 0 23: 0 24: 0 25: 0 26: 0 27: 0 28: 0 29: 0 30: 0 31: 0 32: 0 33: 0 34: 0 35: 0 36: 0 37: 0 38: 0 39: 0 
+################################################################
