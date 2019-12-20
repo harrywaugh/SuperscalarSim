@@ -6,5 +6,6 @@ do
   echo "Getting superscalar (btb) logs for $program program.."
   filename="${program%.*}"
   filename=${filename##*/}
-  ./simulator.exe $program > results/$filename/superscalar-4way.log
+  mkdir -p results/$filename
+  ./simulator.exe $program > results/$filename/superscalar-8way2.log
 done
