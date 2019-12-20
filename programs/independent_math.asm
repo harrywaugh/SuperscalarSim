@@ -1,4 +1,4 @@
-.n 1000
+.n 10000
 
 main:
 	li $a0, 0
@@ -15,5 +15,3 @@ main:
 	add $t1, $t1, $t0
 	mv $s0, $t1
 	exit
-
-

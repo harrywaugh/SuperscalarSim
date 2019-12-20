@@ -1,12 +1,12 @@
 ################################################################ Simulator Config,Value
 Simulator Type,SUPERSCALAR
-Fetch Instructions per Cycle,8
-Decode Instructions per Cycle,8
-Issue Instructions per Cycle,8
-Commit Instructions per Cycle,8
-Load/Store Units,2
+Fetch Instructions per Cycle,6
+Decode Instructions per Cycle,6
+Issue Instructions per Cycle,6
+Commit Instructions per Cycle,6
+Load/Store Units,1
 Load/Store Reservation Station Size,8
-Branch Units,2
+Branch Units,1
 Branch Reservation Station Size,8
 ALU Units,4
 ALU Reservation Station Size,16
@@ -14,15 +14,17 @@ Reorder Buffer Size,32
 Branch Predictor,1
 Time for Memory Access,3
 ################################################################ Analysis Field,Value
-Instructions per Cycle,4.93
+Executed Instructions,50019
+Total Cycles,10020
+Instructions per Cycle,4.99
 Proportion of Program spent Waiting for Memory Access,0.00
 Branch Prediction Accuracy,1.00
 ################################################################ Field, ProgramResult
-Program Result,1001000
+Program Result,100010000
 
 Main Memory : 
 
- 0: 1000  1: 0  2: 0  3: 0  4: 0  5: 0  6: 0  7: 0  8: 0  9: 0 10: 0 11: 0 12: 0 13: 0 14: 0 15: 0 16: 0 17: 0 18: 0 19: 0 
-10: 0 11: 0 12: 0 13: 0 14: 0 15: 0 16: 0 17: 0 18: 0 19: 0 20: 0 21: 0 22: 0 23: 0 24: 0 25: 0 26: 0 27: 0 28: 0 29: 0 
+ 0: 10000  1: 0  2: 0  3: 0  4: 0  5: 0  6: 0  7: 0  8: 0  9: 0 10: 0 11: 0 12: 0 13: 0 14: 0 15: 0 16: 0 17: 0 18: 0 19: 0 
 20: 0 21: 0 22: 0 23: 0 24: 0 25: 0 26: 0 27: 0 28: 0 29: 0 30: 0 31: 0 32: 0 33: 0 34: 0 35: 0 36: 0 37: 0 38: 0 39: 0 
+40: 0 41: 0 42: 0 43: 0 44: 0 45: 0 46: 0 47: 0 48: 0 49: 0 50: 0 51: 0 52: 0 53: 0 54: 0 55: 0 56: 0 57: 0 58: 0 59: 0 
 ################################################################

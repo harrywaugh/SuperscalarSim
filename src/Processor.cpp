@@ -130,6 +130,7 @@ void Processor::incrementCycles()
 void Processor::incrementROBCommit()
 {
     ROB_commit_pointer = (ROB_commit_pointer + 1) % REORDER_BUFFER_SIZE;
+    currently_issued_instructions--;
 }
 
 void Processor::incrementROBIssue()
@@ -818,7 +819,6 @@ void Processor::commit()
             {
                 case J: case NOP: case RETURN:
                     // REFRESH PIPELINE?? EXIT??
-                    currently_issued_instructions--;
                     break;
                 case BEQ: case BLT:
                     executed_branches++;
@@ -866,19 +866,13 @@ void Processor::commit()
                         for (int r = 0; r < MEM_RES_STATION_SIZE; r++)
                             mem_reservation_station[r] = RS_entry {NOP, -1, -1, -1, -1, 0, 0, 0, -1, true};
                     }
-                    else
-                    {
-                        currently_issued_instructions--;
-                    }
                     break;
                 case SW_F: case SW:
                     // Do nothing, no destination register
-                    currently_issued_instructions--;
                 default:
                     register_file[reorder_buffer[ROB_commit_pointer].p_register_dst] = reorder_buffer[ROB_commit_pointer].value;
                     if (register_alias_table[reorder_buffer[ROB_commit_pointer].p_register_dst] == ROB_commit_pointer)
                         register_alias_table[reorder_buffer[ROB_commit_pointer].p_register_dst] = -1;
-                    currently_issued_instructions--;
                     break;
             }
             incrementROBCommit();
