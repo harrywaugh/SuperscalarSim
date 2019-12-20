@@ -1,9 +1,22 @@
 ################################################################ Simulator Config,Value
-Simulator Type,PIPELINED
+Simulator Type,SUPERSCALAR
+Fetch Instructions per Cycle,8
+Decode Instructions per Cycle,8
+Issue Instructions per Cycle,8
+Commit Instructions per Cycle,8
+Load/Store Units,2
+Load/Store Reservation Station Size,8
+Branch Units,2
+Branch Reservation Station Size,8
+ALU Units,4
+ALU Reservation Station Size,16
+Reorder Buffer Size,32
+Branch Predictor,1
+Time for Memory Access,3
 ################################################################ Analysis Field,Value
-Instructions per Cycle,1.00
+Instructions per Cycle,4.93
 Proportion of Program spent Waiting for Memory Access,0.00
-Branch Prediction Accuracy,-inf
+Branch Prediction Accuracy,1.00
 ################################################################ Field, ProgramResult
 Program Result,1001000
 

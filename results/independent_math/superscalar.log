@@ -11,16 +11,12 @@ Branch Reservation Station Size,8
 ALU Units,4
 ALU Reservation Station Size,16
 Reorder Buffer Size,32
+Branch Predictor,2
 Time for Memory Access,3
 ################################################################ Analysis Field,Value
-Time Elapsed,0.33
-Executed Instructions,5017
-Total Cycles,1018
 Instructions per Cycle,4.93
-Instructions per Second,15087.41
-Cycles spent Waiting for Memory Access,3
 Proportion of Program spent Waiting for Memory Access,0.00
-Branch Prediction Accuracy,0.00
+Branch Prediction Accuracy,1.00
 ################################################################ Field, ProgramResult
 Program Result,1001000
 

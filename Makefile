@@ -42,7 +42,7 @@ pipelined-test: clean pipelined
 ################################################
 
 superscalar: src/main.cpp
-	make pipelined VARS="-DSUPERSCALAR=1 ${VARS}"
+	make pipelined VARS=" -DSUPERSCALAR=1 ${VARS}"
 
 superscalar-stats: src/main.cpp
 	make superscalar VARS="-DPRINT_STATS=1 ${VARS}"
@@ -55,6 +55,66 @@ superscalar-test: clean superscalar
 	./simulator.exe programs/stencil.benchmark > /dev/null
 	@echo "Difference between stencil results and correct image:\n"
 	diff 16x16_correct.pgm after.pgm 
+
+
+################################################
+## Superscalar BP = Not Taken
+################################################
+
+superscalar-NT: src/main.cpp
+	make superscalar VARS="-DBRANCH_PREDICTOR=0 ${VARS}"
+
+superscalar-stats-NT: src/main.cpp
+	make superscalar-NT VARS="-DPRINT_STATS=1 ${VARS}"
+
+superscalar-debug-NT: src/main.cpp
+	make superscalar-stats-NT VARS="-DDEBUG ${VARS}"
+
+superscalar-test-NT: clean superscalar-NT
+	@python3 src/run_tests.py
+	./simulator.exe programs/stencil.benchmark > /dev/null
+	# @echo "Difference between stencil results and correct image:\n"
+	# diff 16x16_correct.pgm after.pgm 
+
+################################################
+## Superscalar BP = Taken
+################################################
+
+superscalar-T: src/main.cpp
+	make superscalar VARS="-DBRANCH_PREDICTOR=1 ${VARS}"
+
+superscalar-stats-T: src/main.cpp
+	make superscalar-T VARS="-DPRINT_STATS=1 ${VARS}"
+
+superscalar-debug-T: src/main.cpp
+	make superscalar-stats-T VARS="-DDEBUG ${VARS}"
+
+superscalar-test-T: clean superscalar-T
+	@python3 src/run_tests.py
+	./simulator.exe programs/stencil.benchmark > /dev/null
+	# @echo "Difference between stencil results and correct image:\n"
+	# diff 16x16_correct.pgm after.pgm 
+
+
+################################################
+## Superscalar BP = 2 Bit Dynamic
+################################################
+
+superscalar-2bit: src/main.cpp
+	make superscalar VARS="-DBRANCH_PREDICTOR=2 ${VARS}"
+
+superscalar-stats-2bit: src/main.cpp
+	make superscalar-2bit VARS="-DPRINT_STATS=1 ${VARS}"
+
+superscalar-debug-2bit: src/main.cpp
+	make superscalar-stats-2bit VARS="-DDEBUG ${VARS}"
+
+superscalar-test-2bit: clean superscalar-2bit
+	@python3 src/run_tests.py
+	./simulator.exe programs/stencil.benchmark > /dev/null
+	# @echo "Difference between stencil results and correct image:\n"
+	# diff 16x16_correct.pgm after.pgm 
+
 
 ################################################
 ## Misc
@@ -75,7 +135,13 @@ check:
 	diff 16x16_correct.pgm after.pgm 
 
 	@echo "Running superscalar tests..."
-	make superscalar-test -j
+	make superscalar-test-NT -j
+
+	@echo "Running superscalar tests..."
+	make superscalar-test-T -j
+
+	@echo "Running superscalar tests..."
+	make superscalar-test-2bit -j
 
 
 

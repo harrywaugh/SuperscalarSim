@@ -1,12 +1,7 @@
 ################################################################ Simulator Config,Value
 Simulator Type,SERIAL
 ################################################################ Analysis Field,Value
-Time Elapsed,0.00
-Executed Instructions,52
-Total Cycles,158
 Instructions per Cycle,0.33
-Instructions per Second,319018.41
-Cycles spent Waiting for Memory Access,2
 Proportion of Program spent Waiting for Memory Access,0.01
 Branch Prediction Accuracy,nan
 ################################################################ Field, ProgramResult

@@ -61,8 +61,8 @@ void Processor::MemoryUnit::execute(Processor *processor)
             if (blocking_for > 0)  return;
             if ((current_operand1 + current_operand0) >= 1024 || (current_operand1 + current_operand0) < 0)
             {
-                cout << "Mem unit trying to access non-existant memory" << endl;
-                cout << current_operation << " " << current_operand0 << " " << current_operand1 << " " << current_operand2 << endl;
+                // cout << "Mem unit trying to access non-existant memory" << endl;
+                // cout << current_operation << " " << current_operand0 << " " << current_operand1 << " " << current_operand2 << endl;
             }
             current_result = processor->main_memory[current_operand1 + current_operand0];
             break;
@@ -74,8 +74,8 @@ void Processor::MemoryUnit::execute(Processor *processor)
             
             if ((current_operand1 + current_operand0) >= 1024 || (current_operand1 + current_operand0) < 0)
             {
-                cout << "Mem unit trying to access non-existant memory" << endl;
-                cout << current_operation << " " << current_operand0 << " " << current_operand1 << " " << current_operand2 << endl;
+                // cout << "Mem unit trying to access non-existant memory" << endl;
+                // cout << current_operation << " " << current_operand0 << " " << current_operand1 << " " << current_operand2 << endl;
             }
             memcpy(&current_result, &(processor->main_memory[current_operand1 + current_operand0]), sizeof(float));
             break;
@@ -90,8 +90,8 @@ void Processor::MemoryUnit::execute(Processor *processor)
             if (blocking_for > 0)  return;
             if ((current_operand1 + current_operand2) >= 1024 || (current_operand1 + current_operand2) < 0)
             {
-                cout << "Mem unit trying to access non-existant memory" << endl;
-                cout << current_operation << " " << current_operand0 << " " << current_operand1 << " " << current_operand2 << endl;
+                // cout << "Mem unit trying to access non-existant memory" << endl;
+                // cout << current_operation << " " << current_operand0 << " " << current_operand1 << " " << current_operand2 << endl;
             }
             processor->main_memory[current_operand1 + current_operand2] =  current_operand0;
             break;
@@ -103,8 +103,8 @@ void Processor::MemoryUnit::execute(Processor *processor)
             if (blocking_for > 0)  return;
             if ((current_operand1 + current_operand2) >= 1024 || (current_operand1 + current_operand2) < 0)
             {
-                cout << "Mem unit trying to access non-existant memory" << endl;
-                cout << current_operation << " " << current_operand0 << " " << current_operand1 << " " << current_operand2 << endl;
+                // cout << "Mem unit trying to access non-existant memory" << endl;
+                // cout << current_operation << " " << current_operand0 << " " << current_operand1 << " " << current_operand2 << endl;
             }
             memcpy(&(processor->main_memory[current_operand1 + current_operand2]), &current_operand0, sizeof(float));
             break;

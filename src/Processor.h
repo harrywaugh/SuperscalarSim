@@ -20,7 +20,7 @@
 // #define PRINT_MEM_TO_BITMAP
 // #define PIPELINED 1
 
-#define SUPERSCALAR_WIDTH 6
+#define SUPERSCALAR_WIDTH 8
 
 #ifdef SUPERSCALAR
     #define FETCH_INSTR_PER_CYCLE SUPERSCALAR_WIDTH
@@ -34,8 +34,8 @@
 #define ISSUE_INSTR_PER_CYCLE SUPERSCALAR_WIDTH
 
 #define EXECUTE_UNITS 1
-#define MEM_UNITS 1
-#define BRANCH_UNITS 1
+#define MEM_UNITS 2
+#define BRANCH_UNITS 2
 #define ALU_UNITS 4
 
 #define ALU_RES_STATION_SIZE 16
@@ -43,12 +43,18 @@
 #define MEM_RES_STATION_SIZE 8
 #define REORDER_BUFFER_SIZE 32
 
-// #define BRANCH_PREDICTOR 0 //"STATIC_TAKEN"
-#define BRANCH_PREDICTOR 1 //"DYNAMIC_TWO_BIT_SATURATING"
-// #define BRANCH_PREDICTOR "DYNAMIC_TWO_LEVEL_ADAPTIVE"
+#ifdef BRANCH_PREDICTOR
+
+#else
+    #define BRANCH_PREDICTOR 0
+#endif
+
+//STATIC NOT TAKEN 0
+//STATIC TAKEN 1
+//DYNAMIC TWO BIT SATURATING 2
+//DYNAMIC TWO LEVEL ADAPTIVE 3
 
 #define MEM_ACCESS_TIME 3
-
 
 enum OPERATION
 {
@@ -128,7 +134,7 @@ private:
     int branches_mispredicts = 0;
     int executed_branches = 0;
     bool refresh_flag = false;
-    BRANCH_STATE current_branch_state = WEAKLY_TAKEN;
+    BRANCH_STATE current_branch_state = (BRANCH_PREDICTOR == 0) ? WEAKLY_NOT_TAKEN : WEAKLY_TAKEN;
 
     Instruction nop_instruction;
 

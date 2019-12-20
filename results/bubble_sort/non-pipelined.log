@@ -5,7 +5,7 @@ Time Elapsed,0.00
 Executed Instructions,899
 Total Cycles,3201
 Instructions per Cycle,0.28
-Instructions per Second,341955.12
+Instructions per Second,340659.34
 Cycles spent Waiting for Memory Access,504
 Proportion of Program spent Waiting for Memory Access,0.16
 Branch Prediction Accuracy,nan

@@ -139,8 +139,8 @@ void Processor::incrementROBIssue()
 }
 
 void Processor:: update_branch_state(int branch_state)
-{
-    if (BRANCH_PREDICTOR == 0)  return;
+{   
+    if (BRANCH_PREDICTOR < 2)  return;
     if (branch_state == 1)
         current_branch_state = (BRANCH_STATE)min((int)current_branch_state + 1, 3);
     else 
@@ -152,6 +152,7 @@ void Processor::addInstruction(string line)
     // Instantiate Instruction object, and store in instructions list.
     Instruction new_instruction(line, instructions.size());
     instructions.push_back(new_instruction);
+    // cout << instructions.back().to_string() << endl;
 }
 
 void Processor::printRSEntry(RS_entry &rs_entry) 
@@ -415,6 +416,7 @@ void Processor::run_program()
                 printf("ALU Units,%d\n", ALU_UNITS);
                 printf("ALU Reservation Station Size,%d\n", ALU_RES_STATION_SIZE);
                 printf("Reorder Buffer Size,%d\n", REORDER_BUFFER_SIZE);
+                printf("Branch Predictor,%d\n", BRANCH_PREDICTOR);
                 printf("Time for Memory Access,%d\n", MEM_ACCESS_TIME);
             #else
                 printf("Simulator Type,PIPELINED\n");
@@ -424,12 +426,12 @@ void Processor::run_program()
         #endif
         printf("################################################################");
         printf(" Analysis Field,Value\n");
-        printf("Time Elapsed,%.2f\n", elapsed_seconds.count());
+        // printf("Time Elapsed,%.2f\n", elapsed_seconds.count());
         printf("Executed Instructions,%d\n", executed_instructions);
         printf("Total Cycles,%.d\n", cycles);
         printf("Instructions per Cycle,%.2f\n", (float)(executed_instructions) / (float)(cycles));
-        printf("Instructions per Second,%.2f\n", (float)(executed_instructions) / (float)(elapsed_seconds.count()));
-        printf("Cycles spent Waiting for Memory Access,%d\n", cycles_waiting_for_memory);
+        // printf("Instructions per Second,%.2f\n", (float)(executed_instructions) / (float)(elapsed_seconds.count()));
+        // printf("Cycles spent Waiting for Memory Access,%d\n", cycles_waiting_for_memory);
         printf("Proportion of Program spent Waiting for Memory Access,%.2f\n", (float)(cycles_waiting_for_memory)/(float)cycles);
         printf("Branch Prediction Accuracy,%.2f\n", 1.f - (float)(branches_mispredicts)/(float)executed_branches);
         printf("################################################################ Field, ProgramResult");
@@ -439,7 +441,7 @@ void Processor::run_program()
         for (int j = 0; j < 3; j++)  {
             for (int i = 0; i < 20; i++)  {
                 if (j*10+i < 10)  cout << " ";
-                cout << j * 10 + i << ": " << main_memory[j * 10 + i] << " ";
+                cout << j * 20 + i << ": " << main_memory[j * 20 + i] << " ";
             }
             cout << endl;
         }
@@ -1043,7 +1045,7 @@ void Processor::debug_processor()
     for (int j = 0; j < 2; j++)  {
         for (int i = 0; i < 20; i++)  {
             if (j*10+i < 10)  cout << " ";
-            cout << j * 10 + i << ": " << main_memory[j * 10 + i] << " ";
+            cout << j * 20 + i << ": " << main_memory[j * 20 + i] << " ";
         }
         cout << endl;
     }

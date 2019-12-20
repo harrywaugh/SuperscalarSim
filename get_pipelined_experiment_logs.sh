@@ -20,11 +20,29 @@ do
   ./simulator.exe $program > results/$filename/pipelined.log
 done
 
-make superscalar-stats > /dev/null
+make superscalar-stats-2bit > /dev/null
 for program in programs/*.asm programs/*.benchmark
 do
-  echo "Getting superscalar logs for $program program.."
+  echo "Getting superscalar (2bit) logs for $program program.."
   filename="${program%.*}"
   filename=${filename##*/}
   ./simulator.exe $program > results/$filename/superscalar.log
+done
+
+make superscalar-stats-NT > /dev/null
+for program in programs/*.asm programs/*.benchmark
+do
+  echo "Getting superscalar (!taken) logs for $program program.."
+  filename="${program%.*}"
+  filename=${filename##*/}
+  ./simulator.exe $program > results/$filename/superscalar-nt.log
+done
+
+make superscalar-stats-T > /dev/null
+for program in programs/*.asm programs/*.benchmark
+do
+  echo "Getting superscalar (taken) logs for $program program.."
+  filename="${program%.*}"
+  filename=${filename##*/}
+  ./simulator.exe $program > results/$filename/superscalar-t.log
 done

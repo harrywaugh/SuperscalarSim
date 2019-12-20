@@ -1,14 +1,9 @@
 ################################################################ Simulator Config,Value
 Simulator Type,PIPELINED
 ################################################################ Analysis Field,Value
-Time Elapsed,0.02
-Executed Instructions,4002
-Total Cycles,6000
 Instructions per Cycle,0.67
-Instructions per Second,249843.94
-Cycles spent Waiting for Memory Access,0
 Proportion of Program spent Waiting for Memory Access,0.00
-Branch Prediction Accuracy,inf
+Branch Prediction Accuracy,-inf
 ################################################################ Field, ProgramResult
 Program Result,499500
 
