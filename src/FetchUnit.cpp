@@ -37,7 +37,7 @@ void Processor::FetchUnit::get_instructions(Processor *processor)
                 break;
             case BEQ:
                 instructions.push_back(processor->instructions.at(processor->PC));
-                if (processor->current_branch_state == STRONGLY_TAKEN || processor->current_branch_state == WEAKLY_TAKEN)
+                if (processor->get_current_branch_state() == STRONGLY_TAKEN || processor->get_current_branch_state() == WEAKLY_TAKEN)
                 {
                     processor->PC += stoi(processor->instructions.at(processor->PC).operand2)-1;
                     instructions.back().branch_taken = 1;
@@ -47,7 +47,7 @@ void Processor::FetchUnit::get_instructions(Processor *processor)
                 break;
             case BLT:
                 instructions.push_back(processor->instructions.at(processor->PC));
-                if (processor->current_branch_state == STRONGLY_TAKEN || processor->current_branch_state == WEAKLY_TAKEN)
+                if (processor->get_current_branch_state() == STRONGLY_TAKEN || processor->get_current_branch_state() == WEAKLY_TAKEN)
                 {
                     processor->PC += stoi(processor->instructions.at(processor->PC).operand2)-1;
                     instructions.back().branch_taken = 1;

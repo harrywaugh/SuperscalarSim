@@ -106,6 +106,7 @@ typedef struct ROB_entry {
     int32_t value;
     bool done;
     bool is_empty;
+    int pc_src;
 } ROB_entry;
 
 typedef struct RS_entry {
@@ -135,6 +136,7 @@ private:
     int executed_branches = 0;
     bool refresh_flag = false;
     BRANCH_STATE current_branch_state = (BRANCH_PREDICTOR == 0) ? WEAKLY_NOT_TAKEN : WEAKLY_TAKEN;
+    BRANCH_STATE branch_target_buffer[256] = {WEAKLY_TAKEN};
 
     Instruction nop_instruction;
 
@@ -246,7 +248,10 @@ public:
     void incrementCycles();
     void incrementROBCommit();
     void incrementROBIssue();
+
     void update_branch_state(int branch_taken);
+    void update_branch_state(int branch_taken, int branch_pc);
+    int get_current_branch_state();
 
     void issue();
     void dispatch();

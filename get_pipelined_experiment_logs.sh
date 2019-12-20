@@ -46,3 +46,12 @@ do
   filename=${filename##*/}
   ./simulator.exe $program > results/$filename/superscalar-t.log
 done
+
+make superscalar-stats-2bit-btb > /dev/null
+for program in programs/*.asm programs/*.benchmark
+do
+  echo "Getting superscalar (btb) logs for $program program.."
+  filename="${program%.*}"
+  filename=${filename##*/}
+  ./simulator.exe $program > results/$filename/superscalar-btb.log
+done

@@ -43,7 +43,10 @@ void Processor::BranchUnit::execute(Processor *processor)
             break;
         case BEQ:
             current_result = (current_operand0 == current_operand1) ? 1 : 0;
-            processor->update_branch_state(current_result);
+            if (BRANCH_PREDICTOR <= 2)
+                processor->update_branch_state(current_result);
+            else
+                processor->update_branch_state(current_result, processor->reorder_buffer[rob_dst].pc_src);
             if ((branch_taken == 1 && current_result == 0) || (branch_taken == 0 && current_result == 1))
                 current_result = 0;
             else
@@ -51,7 +54,10 @@ void Processor::BranchUnit::execute(Processor *processor)
             break;
         case BLT:
             current_result = (current_operand0 < current_operand1) ? 1 : 0;
-            processor->update_branch_state(current_result);
+            if (BRANCH_PREDICTOR <= 2)
+                processor->update_branch_state(current_result);
+            else
+                processor->update_branch_state(current_result, processor->reorder_buffer[rob_dst].pc_src);
             if ((branch_taken == 1 && current_result == 0) || (branch_taken == 0 && current_result == 1))
                 current_result = 0;
             else

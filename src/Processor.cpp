@@ -45,7 +45,7 @@ Processor::Processor()
     }
 
     for (int i = 0; i < REORDER_BUFFER_SIZE; i++)  
-        reorder_buffer[i] = ROB_entry {-1, NOP, 0, false, true};
+        reorder_buffer[i] = ROB_entry {-1, NOP, 0, false, true, -1};
 
     for (int i = 0; i < ALU_RES_STATION_SIZE; i++)  
         alu_reservation_station[i] = RS_entry {NOP, -1, -1, -1, -1, 0, 0, 0, -1, true};
@@ -139,13 +139,33 @@ void Processor::incrementROBIssue()
     currently_issued_instructions++;
 }
 
-void Processor:: update_branch_state(int branch_state)
+void Processor::update_branch_state(int branch_state)
 {   
     if (BRANCH_PREDICTOR < 2)  return;
     if (branch_state == 1)
         current_branch_state = (BRANCH_STATE)min((int)current_branch_state + 1, 3);
     else 
         current_branch_state = (BRANCH_STATE)max((int)current_branch_state - 1, 0);
+}
+
+void Processor::update_branch_state(int branch_state, int branch_pc)
+{   
+    if (branch_state == 1)
+        branch_target_buffer[branch_pc & 255] = (BRANCH_STATE)min((int)branch_target_buffer[branch_pc & 255] + 1, 3);
+    else 
+        branch_target_buffer[branch_pc & 255] = (BRANCH_STATE)max((int)branch_target_buffer[branch_pc & 255] - 1, 0);
+
+    // cout << "Updating " << (branch_pc & 255) << branch_target_buffer[branch_pc & 255]<< endl;
+
+    
+}
+
+int Processor::get_current_branch_state()
+{   
+    if (BRANCH_PREDICTOR <= 2)  
+        return current_branch_state;
+    // cout << "Getting " << (PC & 255) << branch_target_buffer[PC & 255] << endl;
+    return branch_target_buffer[PC & 255];
 }
 
 void Processor::addInstruction(string line)  
@@ -526,7 +546,8 @@ void Processor::issue()
                                     string_to_op_map[instruction_queue.front().opcode],
                                     0, 
                                     false, // Marks entry as done
-                                    false // Marks entry as not empty
+                                    false, // Marks entry as not empty
+                                    instruction_queue.front().PC
                                 };
                                 branch_reservation_station[i].op = string_to_op_map.at(instruction_queue.front().opcode);
                                 branch_reservation_station[i].rob_dst = ROB_issue_pointer;
@@ -554,7 +575,9 @@ void Processor::issue()
                                     string_to_op_map[instruction_queue.front().opcode],
                                     0, // Value - not ready so just placeholder
                                     false, // Marks entry as done
-                                    false // Marks entry as not empty
+                                    false, // Marks entry as not empty
+                                    instruction_queue.front().PC
+                
                                 };
                                 branch_reservation_station[i].op = string_to_op_map.at(instruction_queue.front().opcode);
                                 branch_reservation_station[i].rob_dst = ROB_issue_pointer;
@@ -582,7 +605,8 @@ void Processor::issue()
                             string_to_op_map[instruction_queue.front().opcode],
                             0, // Value - not ready so just placeholder
                             false, // Marks entry as done
-                            false // Marks entry as not empty
+                            false, // Marks entry as not empty
+                            instruction_queue.front().PC
                         };
                         mem_reservation_station[i] = {NOP, -1, -1, -1, -1, 0, 0, 0, -1, true};
                         mem_reservation_station[i].op = string_to_op_map.at(instruction_queue.front().opcode);
@@ -689,7 +713,8 @@ void Processor::issue()
                             string_to_op_map[instruction_queue.front().opcode],
                             0, // Value - not ready so just placeholder
                             false, // Marks entry as done
-                            false // Marks entry as not empty
+                            false, // Marks entry as not empty
+                            instruction_queue.front().PC
                         };
                         alu_reservation_station[i].op = string_to_op_map.at(instruction_queue.front().opcode);
                         alu_reservation_station[i].rob_dst = ROB_issue_pointer;

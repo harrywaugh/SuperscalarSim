@@ -115,6 +115,25 @@ superscalar-test-2bit: clean superscalar-2bit
 	# @echo "Difference between stencil results and correct image:\n"
 	# diff 16x16_correct.pgm after.pgm 
 
+################################################
+## Superscalar BP = 2 Bit BTB
+################################################
+
+superscalar-2bit-btb: src/main.cpp
+	make superscalar VARS="-DBRANCH_PREDICTOR=3 ${VARS}"
+
+superscalar-stats-2bit-btb: src/main.cpp
+	make superscalar-2bit-btb VARS="-DPRINT_STATS=1 ${VARS}"
+
+superscalar-debug-2bit-btb: src/main.cpp
+	make superscalar-stats-2bit-btb VARS="-DDEBUG ${VARS}"
+
+superscalar-test-2bit-btb: clean superscalar-2bit-btb
+	@python3 src/run_tests.py
+	./simulator.exe programs/stencil.benchmark > /dev/null
+	# @echo "Difference between stencil results and correct image:\n"
+	# diff 16x16_correct.pgm after.pgm 
+
 
 ################################################
 ## Misc
@@ -142,6 +161,9 @@ check:
 
 	@echo "Running superscalar tests..."
 	make superscalar-test-2bit -j
+
+	@echo "Running superscalar tests..."
+	make superscalar-test-2bit-btb -j
 
 
 
