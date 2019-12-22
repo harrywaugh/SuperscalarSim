@@ -1,30 +1,45 @@
 # SuperscalarSim
-Advanced Architecture Coursework at the University of Bristol. Superscalar simulator.
 
-MIPS Reference:
-https://www.dsi.unive.it/~gasparetto/materials/MIPS_Instruction_Set.pdf
+A superscalar processor simulator that can be configured to run in Scalar, Pipelined and Superscalar modes. It features a pipeline with 6 stages of execution (Fetch, Decode, Issue, Dispatch, Execute, Commit) and implements Out-of-Order execution using Tomosulo's algorithm with a reorder buffer. The simulator is designed to be n-way superscalar is highly configurable. Features:
+- Configurable mode: Scalar, Pipelined and Superscalar
+- Configurable number of Branch, Load/Store and ALU units.
+- Configurable number of Fetch/Decode/Issue/Commit instructions per cycle.
+- Configurable choice of branch predictor: Static Taken, Static Not Taken, Dynamic 2-bit, Dynamic 2-bit with Branch Target Buffer default
+- Execution unit results are forwarded to reservation stations for use in the next cycle.
 
-C to MIPS Compiler:
-http://reliant.colab.duke.edu/c2mips/
+A quick overview of the simulator can be found in "Superscalar Simulator.pdf" with an architecture diagram and some experiments.\
 
 ### Compile and Run
 
-The code can be compiled by running the following:
+**Compiling:**
 ```shell
-make
-./simulator.exe programs/<program_name>.asm
+# To compile scalar:
+make stats
+# To compile pipelined:
+make pipelined-stats
+# To compile superscalar: where <BPredictor> = T, NT, 2bit, 2bit-btb
+make superscalar-stats-<BPredictor>
 ```
 
-**where**:
-    program_name = [addition, bubble_sort, factorial, gcd, sum_n_natural]
+The code can also be run in a step-by-step debug mode by replacing `stats` with `debug`.
+
+**Running**
+```shell
+./simulator.exe programs/<program>
+# where program = {
+#    stencil.benchmark
+#    vector_add.benchmark
+#    imatmul.benchmark
+#    addition.asm
+#    factorial.asm
+#    independent_math.asm
+#    gcd.asm
+#    sum_n_natural.asm
+# }
+```
 
 
-Currently the processor is in **debug** mode, and you can step through each instruction by pressing 'Enter'. 
-At each step, the processor will output the current values in main memory, the register values, and more info on any functions, 
-variables or arrays that the program is using. 
+**Useful Links:**
 
-The program will also display the current instruction and the number of cycles that have been run.
-
-
-**Note:**
-The processor currently has 3 stages: fetch -> decode -> execute.
+MIPS Reference:
+https://www.dsi.unive.it/~gasparetto/materials/MIPS_Instruction_Set.pdf

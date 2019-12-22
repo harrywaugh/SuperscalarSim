@@ -42,7 +42,7 @@ pipelined-test: clean pipelined
 ################################################
 
 superscalar: src/main.cpp
-	make pipelined VARS=" -DSUPERSCALAR=1 ${VARS}"
+	make pipelined VARS=" -DSUPERSCALAR=1 -DBRANCH_PREDICTOR=3 ${VARS}"
 
 superscalar-stats: src/main.cpp
 	make superscalar VARS="-DPRINT_STATS=1 ${VARS}"
