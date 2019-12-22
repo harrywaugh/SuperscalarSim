@@ -1,6 +1,6 @@
 # SuperscalarSim
 
-A superscalar processor simulator that can be configured to run in Scalar, Pipelined and Superscalar modes. It features a pipeline with 6 stages of execution (Fetch, Decode, Issue, Dispatch, Execute, Commit) and implements Out-of-Order execution using Tomosulo's algorithm with a reorder buffer. The simulator is designed to be n-way superscalar is highly configurable. Features:
+A superscalar processor simulator that can be configured to run in Scalar, Pipelined and Superscalar modes. It features a pipeline with 6 stages of execution (Fetch, Decode, Issue, Dispatch, Execute, Commit) and implements Out-of-Order execution using Tomosulo's algorithm with a reorder buffer. The simulator is designed to be n-way superscalar and is highly configurable. Features:
 - Configurable mode: Scalar, Pipelined and Superscalar
 - Configurable number of Branch, Load/Store and ALU units.
 - Configurable number of Fetch/Decode/Issue/Commit instructions per cycle.
