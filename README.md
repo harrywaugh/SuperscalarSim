@@ -7,7 +7,7 @@ A superscalar processor simulator that can be configured to run in Scalar, Pipel
 - Configurable choice of branch predictor: Static Taken, Static Not Taken, Dynamic 2-bit, Dynamic 2-bit with Branch Target Buffer default
 - Execution unit results are forwarded to reservation stations for use in the next cycle.
 
-A quick overview of the simulator can be found in "Superscalar Simulator.pdf" with an architecture diagram and some experiments.\
+A quick overview of the simulator can be found in "Superscalar Simulator.pdf" with an architecture diagram and some experiments.
 
 ### Compile and Run
 
